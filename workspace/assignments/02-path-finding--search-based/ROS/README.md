@@ -48,14 +48,14 @@ roslaunch grid_path_searcher demo.launch
 
 算法流程如下:
 
-* [Step 1: Get Heuristics](src/grid_path_searcher/src/Astar_searcher.cpp#193)
-* [Step 2: Initialization](src/grid_path_searcher/src/Astar_searcher.cpp#244)
-* [Step 3: Expand Current Node](src/grid_path_searcher/src/Astar_searcher.cpp#252)
-* [Step 4: Get Successors](src/grid_path_searcher/src/Astar_searcher.cpp#270)
-* [Step 5: Process Candidate Successor](src/grid_path_searcher/src/Astar_searcher.cpp#275)
-* [Step 6: Insert New Node](src/grid_path_searcher/src/Astar_searcher.cpp#290)
-* [Step 7: Update Existing Node](src/grid_path_searcher/src/Astar_searcher.cpp#301)
-* [Step 4: Get Result Path](src/grid_path_searcher/src/Astar_searcher.cpp#349)
+* [Step 1: Get Heuristics](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/02-path-finding--search-based/ROS/src/grid_path_searcher/src/Astar_searcher.cpp#L193)
+* [Step 2: Initialization](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/02-path-finding--search-based/ROS/src/grid_path_searcher/src/Astar_searcher.cpp#L244)
+* [Step 3: Expand Current Node](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/02-path-finding--search-based/ROS/src/grid_path_searcher/src/Astar_searcher.cpp#L252)
+* [Step 4: Get Successors](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/02-path-finding--search-based/ROS/src/grid_path_searcher/src/Astar_searcher.cpp#L270)
+* [Step 5: Process Candidate Successor](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/02-path-finding--search-based/ROS/src/grid_path_searcher/src/Astar_searcher.cpp#L275)
+* [Step 6: Insert New Node](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/02-path-finding--search-based/ROS/src/grid_path_searcher/src/Astar_searcher.cpp#L290)
+* [Step 7: Update Existing Node](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/02-path-finding--search-based/ROS/src/grid_path_searcher/src/Astar_searcher.cpp#L301)
+* [Step 4: Get Result Path](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/02-path-finding--search-based/ROS/src/grid_path_searcher/src/Astar_searcher.cpp#L349)
 
 ---
 
