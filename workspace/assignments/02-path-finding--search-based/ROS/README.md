@@ -8,39 +8,56 @@
 
 本作业旨在引导您:
 
-* 验证课程作业开发环境配置的正确性
+* 实现A* Path Finding
 
 ---
 
-## Getting Started
+## Up & Running
 
 启动Docker后, 打开浏览器, 前往localhost:40080, 进入Web Workspace. **若需要提高清晰度, 可以更改URL中的quality参数**. 启动Terminator, 将两个Shell的工作目录切换如下:
 
-<img src="doc/terminator.png" alt="Terminator" width="100%">
+<img src="doc/images/terminator.png" alt="Terminator" width="100%">
 
-在**上侧**的Shell中, 输入如下命令, **编译catkin_workspace**
+在**上侧**的Shell中, 输入如下命令, **编译Search Based Path Finder**
 
 ```bash
 # build
-catkin config --install && catkin build
+catkin_make
 ```
 
 然后**启动解决方案**
 
 ```bash
-# set up session:
-source install/setup.bash
 # launch:
-roslaunch lidar_localization hello_kitti.launch
+roslaunch grid_path_searcher demo.launch
 ```
 
-在**下侧**的Shell中, 输入如下命令, **Play KITTI ROS Bag**
+最后, 点击**3D Nav Goal**, 发布**Termination Position**, 成功后, 可以看到如下的RViz界面:
 
-```bash
-# play ROS bag
-rosbag play kitti_2011_10_03_drive_0027_synced.bag
-```
+<img src="doc/images/demo.png" alt="Search Based Path Finding Demo" width="100%">
 
-成功后, 可以看到如下的RViz界面:
+---
 
-<img src="doc/demo.png" alt="KITTI Demo" width="100%">
+## Q1. 算法流程与运行结果
+
+### A Star
+
+**A Star**的运行结果如下, 结果为使用L2 Heuristics的结果
+
+<img src="doc/images/result-a-star.png" alt="Result A Star" width="100%">
+
+算法流程如下:
+
+* [Step 1: Get Heuristics](src/Astar_searcher.cpp#193)
+* [Step 2: Initialization](src/Astar_searcher.cpp#244)
+* [Step 3: Expand Current Node](src/Astar_searcher.cpp#252)
+* [Step 4: Get Successors](src/Astar_searcher.cpp#270)
+* [Step 5: Process Candidate Successor](src/Astar_searcher.cpp#275)
+* [Step 6: Insert New Node](src/Astar_searcher.cpp#290)
+* [Step 7: Update Existing Node](src/Astar_searcher.cpp#301)
+* [Step 4: Get Result Path](src/Astar_searcher.cpp#349)
+
+---
+
+## Q2. 对比不同启发式函数对A Star运行结果的影响
+
