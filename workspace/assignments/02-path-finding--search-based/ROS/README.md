@@ -48,14 +48,14 @@ roslaunch grid_path_searcher demo.launch
 
 算法流程如下:
 
-* [Step 1: Get Heuristics](src/Astar_searcher.cpp#193)
-* [Step 2: Initialization](src/Astar_searcher.cpp#244)
-* [Step 3: Expand Current Node](src/Astar_searcher.cpp#252)
-* [Step 4: Get Successors](src/Astar_searcher.cpp#270)
-* [Step 5: Process Candidate Successor](src/Astar_searcher.cpp#275)
-* [Step 6: Insert New Node](src/Astar_searcher.cpp#290)
-* [Step 7: Update Existing Node](src/Astar_searcher.cpp#301)
-* [Step 4: Get Result Path](src/Astar_searcher.cpp#349)
+* [Step 1: Get Heuristics](src/grid_path_searcher/src/Astar_searcher.cpp#193)
+* [Step 2: Initialization](src/grid_path_searcher/src/Astar_searcher.cpp#244)
+* [Step 3: Expand Current Node](src/grid_path_searcher/src/Astar_searcher.cpp#252)
+* [Step 4: Get Successors](src/grid_path_searcher/src/Astar_searcher.cpp#270)
+* [Step 5: Process Candidate Successor](src/grid_path_searcher/src/Astar_searcher.cpp#275)
+* [Step 6: Insert New Node](src/grid_path_searcher/src/Astar_searcher.cpp#290)
+* [Step 7: Update Existing Node](src/grid_path_searcher/src/Astar_searcher.cpp#301)
+* [Step 4: Get Result Path](src/grid_path_searcher/src/Astar_searcher.cpp#349)
 
 ---
 
