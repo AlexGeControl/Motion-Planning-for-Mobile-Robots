@@ -159,6 +159,10 @@ RUN git clone https://github.com/google/protobuf.git -o protobuf && cd protobuf 
     # install:
     make install
 
+# install Open Motion Planning Library:
+RUN wget https://ompl.kavrakilab.org/install-ompl-ubuntu.sh && \ 
+    chmod u+x ./install-ompl-ubuntu.sh && ./install-ompl-ubuntu.sh
+
 # install tini:
 RUN chmod u+x ./download-tini.sh && ./download-tini.sh && dpkg -i tini.deb && \
     apt-get clean
