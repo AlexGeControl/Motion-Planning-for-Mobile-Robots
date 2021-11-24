@@ -18,7 +18,7 @@
 
 <img src="doc/images/terminator.png" alt="Terminator" width="100%">
 
-在**上侧**的Shell中, 输入如下命令, **编译Search Based Path Finder**
+在**左侧**的Shell中, 输入如下命令, **编译Search Based Path Finder**
 
 ```bash
 # build
@@ -28,32 +28,34 @@ catkin_make
 然后**启动解决方案**
 
 ```bash
+# set up session:
+source devel/setup.bash
 # launch:
-roslaunch grid_path_searcher demo.launch
+roslaunch waypoint_trajectory_generator test.launch 
 ```
 
-最后, 点击**3D Nav Goal**, 发布**Termination Position**, 成功后, 可以看到如下的RViz界面:
-
-<img src="doc/images/demo-rviz.png" alt="Sample Based Path Finding Demo, RViz" width="100%">
-
+随后在**右侧**的Shell中, 输入如下命令, **发布随机的Coarse Path, 触发Trajectory Optimization**
+```bash
+# set up session:
+source devel/setup.bash
+# publish coarse path:
+./src/waypoint_trajectory_generator/scripts/publish_waypoints.sh
+```
 ---
 
 ## Q1. 算法流程与运行结果
 
-### RRT Star
+### Minimum Snap
 
-**RRT Star**的运行结果如下, 结果为使用**getPathLengthObjective**的结果
+**Minimum Snap**的运行结果如下:
 
-<img src="doc/images/demo-bash.png" alt="Sample Based Path Finding Demo, Bash" width="100%">
+<img src="doc/images/demo-RViz.png" alt="Sample Based Path Finding Demo, RViz" width="100%">
 
 算法流程如下:
 
-* [Step 1: Implement Validity Checker](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/ROS/src/grid_path_searcher/src/demo_node.cpp#L133)
-* [Step 2: Define Start State](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/ROS/src/grid_path_searcher/src/demo_node.cpp#L185)
-* [Step 3: Define Goal State](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/ROS/src/grid_path_searcher/src/demo_node.cpp#L193)
-* [Step 4: Define Path Finding Problem](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/ROS/src/grid_path_searcher/src/demo_node.cpp#L201)
-* [Step 5: Define Optimization Objective](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/ROS/src/grid_path_searcher/src/demo_node.cpp#L210)
-* [Step 6: Set Optimizer](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/ROS/src/grid_path_searcher/src/demo_node.cpp#L218)
-* [Step 7: Format Output](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/ROS/src/grid_path_searcher/src/demo_node.cpp#L243)
+* [Step 1: Time Allocation, Trapezoidal Heuristics](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_node.cpp#L278)
+* [Step 2: Minimum Snap Solver Interface](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_waypoint.cpp#L30)
+* [Step 2.1: Numeric Solver with OSQP](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_waypoint.cpp#L81)
+* [Step 2.1: Analytic Solver](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_waypoint.cpp#L81)
 
 ---

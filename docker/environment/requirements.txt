@@ -1,2 +1,2 @@
-kitti2bag==1.5
-evo==1.12.0
+kitti2bag
+evo

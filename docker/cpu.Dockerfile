@@ -92,7 +92,8 @@ RUN apt-fast update --fix-missing && \
         libglib2.0-dev libboost-dev libboost-all-dev \
         libomp-dev libtbb-dev \
         libgoogle-glog-dev \
-        # b. Python 2:
+        googletest \
+        # b. Python 2 & 3:
         python-pip python-dev python-tk \
         # c. lua:
         lua5.3 liblua5.3-dev libluabind-dev \
@@ -134,7 +135,8 @@ RUN apt-fast update --fix-missing && \
         # localization:
         ros-melodic-amcl \
         # planning:
-        ros-melodic-mrpt-navigation && \
+        ros-melodic-mrpt-navigation \
+        libompl-dev ompl-demos && \
     apt-fast autoclean && \
     apt-fast autoremove && \
     rm -rf /var/lib/apt/lists/*
@@ -142,35 +144,7 @@ RUN apt-fast update --fix-missing && \
 # ordered startup fix for supervisord:
 RUN pip install ordered-startup-supervisord
 
-# ------ PART 5: offline installers ------
-
-# load installers:
-COPY ${PWD}/installers /tmp/installers
-WORKDIR /tmp/installers
-
-# install Google Protobuf latest:
-RUN git clone https://github.com/google/protobuf.git -o protobuf && cd protobuf && \
-    # sync:
-    git submodule update --init --recursive && \
-    # config:
-    ./autogen.sh && ./configure && \ 
-    # build:
-    make -j8 && \
-    # install:
-    make install
-
-# install Open Motion Planning Library:
-RUN wget https://ompl.kavrakilab.org/install-ompl-ubuntu.sh && \ 
-    chmod u+x ./install-ompl-ubuntu.sh && ./install-ompl-ubuntu.sh
-
-# install tini:
-RUN chmod u+x ./download-tini.sh && ./download-tini.sh && dpkg -i tini.deb && \
-    apt-get clean
-
-RUN rm -rf /tmp/installers
-
-
-# ------ PART 6: set up ROS environments ------
+# ------ PART 5: set up ROS environments ------
 
 # initialize rosdep
 # 
@@ -206,7 +180,143 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 EXPOSE 80 5901 9001
 
-# ------ PART 7: set up Sensor Fusion courseware dependencies ------
+# ------ PART 7: offline installers ------
+
+# load installers:
+COPY ${PWD}/installers /tmp/installers
+
+# set up environment:
+ENV INCLUDE_PATH=${INCLUDE_PATH}:/usr/local/include
+ENV LIBRARY_PATH=${LIBRARY_PATH}:/usr/local/lib:/usr/local/lib/x86_64-linux-gnu
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib:/usr/local/lib/x86_64-linux-gnu
+
+# install latest CMake:
+WORKDIR /tmp/installers
+RUN git clone https://github.com/Kitware/CMake -o CMake && \
+    # config:
+    cd CMake && chmod u+x ./bootstrap && ./bootstrap && \
+    # build:
+    make -j8 && \
+    # install:
+    make install && \
+    # done:
+    ldconfig
+
+# install GoogleTest latest:
+WORKDIR /tmp/installers
+RUN git clone https://github.com/google/googletest.git -b release-1.11.0 -o googletest && \
+    # config:
+    cd googletest && mkdir build && cd build && cmake .. -DBUILD_GMOCK=OFF && \
+    # build:
+    make -j8 && \
+    # install:
+    make install && \
+    # done:
+    ldconfig
+
+# install Google Protobuf latest:
+WORKDIR /tmp/installers
+RUN git clone https://github.com/google/protobuf.git -o protobuf && cd protobuf && \
+    # sync:
+    git submodule update --init --recursive && \
+    # config:
+    ./autogen.sh && ./configure && \ 
+    # build:
+    make -j8 && \
+    # install:
+    make install && \
+    # done:
+    ldconfig
+
+#
+# install Google abseil:
+#     CMake:   /usr/local/lib/x86_64-linux-gnu/cmake
+#     include: /usr/local/include/absl
+#     lib:     /usr/local/lib/x86_64-linux-gnu
+# 
+WORKDIR /tmp/installers
+RUN git clone https://github.com/abseil/abseil-cpp.git -o abseil-cpp  && \
+    # config:
+    cd abseil-cpp && mkdir build && mkdir install && cd build && \
+    cmake \
+        -DBUILD_TESTING=ON \
+        -DABSL_USE_GOOGLETEST_HEAD=ON \
+        -DCMAKE_CXX_STANDARD=11 \
+    .. && \
+    # build:
+    make -j8 && \
+    # install:
+    make install && \
+    # done:
+    ldconfig
+ENV CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/lib/x86_64-linux-gnu/cmake/absl
+
+#
+# install latest Eigen:
+#     CMake:   /usr/local/share/eigen3/cmake/
+#     include: /usr/local/include/eigen3
+#     lib:     none
+# 
+WORKDIR /tmp/installers
+RUN git clone https://gitlab.com/libeigen/eigen -o eigen && \
+    # config:
+    cd eigen && mkdir build && cd build && cmake .. && \
+    # build:
+    make -j8 && \
+    # install:
+    make install && \
+    # done:
+    ldconfig
+ENV CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/share/eigen3/cmake
+
+#
+# install OSQP:
+#     CMake:   /usr/local/lib/x86_64-linux-gnu/cmake
+#              /usr/local/lib/cmake/qdldl
+#     include: /usr/local/include/osqp
+#     lib:     /usr/local/lib/x86_64-linux-gnu/
+# 
+WORKDIR /tmp/installers
+RUN git clone --recursive https://github.com/osqp/osqp -o osqp  && \
+    # config:
+    cd osqp && mkdir build && cd build && cmake -G "Unix Makefiles" .. && \
+    # build:
+    make -j8 && \
+    # install:
+    make install && \
+    # done:
+    ldconfig
+ENV CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/lib/cmake/qdldl:/usr/local/lib/x86_64-linux-gnu/cmake/osqp
+
+# instal OSQP C++:
+#     CMake:   /usr/local/lib/x86_64-linux-gnu/cmake/osqp
+#              /usr/local/lib/cmake/qdldl
+#     include: /usr/local/include/osqp
+#     lib:     /usr/local/lib/x86_64-linux-gnu
+# 
+WORKDIR /tmp/installers
+RUN git clone --recursive https://github.com/google/osqp-cpp -o osqp-cpp  && \
+    # config:
+    cd osqp-cpp && mkdir build && cd build && cmake .. -DOSQP-CPP_BUILD_TESTS=OFF && \
+    # build:
+    make -j8 && \
+    # install:
+    make install && \
+    # install include:
+    mkdir /usr/local/include/osqp-cpp && cp /tmp/installers/osqp-cpp/include/osqp++.h /usr/local/include/osqp-cpp && \
+    # install lib:
+    cp libosqp-cpp.a /usr/local/lib/x86_64-linux-gnu && \
+    # done:
+    ldconfig
+
+# install tini:
+WORKDIR /tmp/installers
+RUN chmod u+x ./download-tini.sh && ./download-tini.sh && dpkg -i tini.deb && \
+    apt-get clean
+
+RUN rm -rf /tmp/installers
+
+# ------ PART 8: set up Motion Planning for Mobile Robots courseware dependencies ------
 
 COPY environment /workspace
 
@@ -215,8 +325,5 @@ WORKDIR /workspace
 RUN pip install -r requirements.txt
 
 # ------------------ DONE -----------------------
-
-# enable dependency lib linking:
-ENV LD_LIBRARY_PATH=/usr/local/lib
 
 ENTRYPOINT ["/startup.sh"]
