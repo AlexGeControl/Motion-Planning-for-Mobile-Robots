@@ -1,8 +1,9 @@
 #!/bin/bash
+
 rostopic pub --once /goal geometry_msgs/PoseStamped "header:
   seq: 0
   stamp:
-    secs: 0
+    secs: 1
     nsecs: 0
   frame_id: 'map'
 pose:
@@ -19,7 +20,7 @@ pose:
 rostopic pub --once /goal geometry_msgs/PoseStamped "header:
   seq: 0
   stamp:
-    secs: 0
+    secs: 2
     nsecs: 0
   frame_id: 'map'
 pose:
@@ -36,7 +37,7 @@ pose:
 rostopic pub --once /goal geometry_msgs/PoseStamped "header:
   seq: 0
   stamp:
-    secs: 0
+    secs: 3
     nsecs: 0
   frame_id: 'map'
 pose:
@@ -53,7 +54,7 @@ pose:
 rostopic pub --once /goal geometry_msgs/PoseStamped "header:
   seq: 0
   stamp:
-    secs: 0
+    secs: 4
     nsecs: 0
   frame_id: 'map'
 pose:
@@ -70,7 +71,7 @@ pose:
 rostopic pub --once /goal geometry_msgs/PoseStamped "header:
   seq: 0
   stamp:
-    secs: 0
+    secs: 5
     nsecs: 0
   frame_id: 'map'
 pose:
@@ -87,7 +88,7 @@ pose:
 rostopic pub --once /goal geometry_msgs/PoseStamped "header:
   seq: 0
   stamp:
-    secs: 0
+    secs: 6
     nsecs: 0
   frame_id: 'map'
 pose:

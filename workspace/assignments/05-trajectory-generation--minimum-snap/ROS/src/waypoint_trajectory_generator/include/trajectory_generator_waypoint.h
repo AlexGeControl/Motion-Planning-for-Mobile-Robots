@@ -11,6 +11,35 @@ public:
   ~TrajectoryGeneratorWaypoint();
 
   /**
+   * @brief get minimum num. of polynomial coeffs to satisfy [cOrder]th continuous constraints
+   *
+   * @param[in] cOrder continuity constraints, the target trajectory should be [cOrder]th continuous at intermediate waypoints
+   *
+   * @return minimum num of polynomial coeffs
+   */
+  static inline int GetNumCoeffs(const int cOrder) { return (cOrder + 1) << 1; }
+  
+  /**
+   * @brief get partial factorial generated in derivative computing
+   *
+   * @param[in] N polynomial term power
+   * @param[in] D derivative order
+   *
+   * @return partial factorial as N!/D!
+   */
+  static double GetFactorial(const int N, const int D);
+
+  /**
+   * @brief evaluate trajectory polynomial
+   *
+   * @param[in] N polynomial term power
+   * @param[in] D derivative order
+   *
+   * @return result waypoint
+   */
+  static double EvaluatePoly(const Eigen::VectorXd &coeffs, const double t);
+
+  /**
    * @brief generate minimum snap trajectory through numeric method with OSQP C++
    *
    * @param[in] tOrder the L2-norm of [tOrder]th derivative of the target trajectory will be used as objective function
@@ -33,9 +62,6 @@ public:
   );
 
 private:
-  inline int GetNumCoeffs(const int cOrder) const { return (cOrder + 1) << 1; }
-  double GetFactorial(const int N, const int D) const;
-
   /**
     * @brief generate minimum snap trajectory through numeric method with OSQP C++
     *

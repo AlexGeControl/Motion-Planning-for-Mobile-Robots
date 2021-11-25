@@ -15,6 +15,43 @@ TrajectoryGeneratorWaypoint::TrajectoryGeneratorWaypoint(){}
 TrajectoryGeneratorWaypoint::~TrajectoryGeneratorWaypoint(){}
 
 /**
+  * @brief get partial factorial generated in derivative computing
+  *
+  * @param[in] N polynomial term power
+  * @param[in] D derivative order
+  *
+  * @return partial factorial as N!/D!
+  */
+double TrajectoryGeneratorWaypoint::GetFactorial(const int N, const int D) {
+    double result{1.0};
+
+    for (int i = 0; i < D; ++i) {
+        result *= (N - i);
+    }
+
+    return result;
+}
+
+/**
+  * @brief evaluate trajectory polynomial
+  *
+  * @param[in] N polynomial term power
+  * @param[in] D derivative order
+  *
+  * @return result waypoint
+  */
+double TrajectoryGeneratorWaypoint::EvaluatePoly(const Eigen::VectorXd &coeffs, const double t) {
+    const int N = coeffs.size();
+
+    Eigen::VectorXd powers = Eigen::VectorXd::Zero(N);
+    for (int n = 0; n < N; ++n) {
+        powers(n) = ((n == 0) ? 1.0 : t*powers(n - 1));
+    }
+
+    return coeffs.dot(powers);
+}
+
+/**
  * @brief generate minimum snap trajectory through numeric method with OSQP C++
  *
  * @param[in] tOrder the L2-norm of [tOrder]th derivative of the target trajectory will be used as objective function
@@ -50,16 +87,6 @@ Eigen::MatrixXd TrajectoryGeneratorWaypoint::PolyQPGeneration(
             Acc.col(i),
             Time
         );
-    }
-
-    return result;
-}
-
-double TrajectoryGeneratorWaypoint::GetFactorial(const int N, const int D) const {
-    double result{1.0};
-
-    for (int i = 0; i < D; ++i) {
-        result *= (N - i);
     }
 
     return result;
@@ -101,12 +128,6 @@ Eigen::MatrixXd TrajectoryGeneratorWaypoint::PolyQPGenerationNumeric(
         (K - 1) + 
         // 3. intermediate waypoint continuity constaints:
         (K - 1) * (cOrder + 1)
-    );
-
-    ROS_WARN(
-        "[PolyGenNumeric]: N %d, K %d, D %d, C %d", 
-        N, K,
-        D, C
     );
 
     //
@@ -152,20 +173,10 @@ Eigen::MatrixXd TrajectoryGeneratorWaypoint::PolyQPGenerationNumeric(
         PFactorial.insert(
             {n, GetFactorial(n, tOrder)}
         );
-
-        ROS_WARN(
-            "[PolyGenNumeric]: PFactorial[%d] %.2f", 
-            n, PFactorial[n]
-        );
     }
 
     // 3. populate PTriplets:
     for (int k = 0; k < K; ++k) {
-        ROS_WARN(
-            "[PolyGenNumeric]: PTimePower[%d] %.2f", 
-            k, PTimePower(k)
-        );
-
         const auto currentSegmentIdxOffset = k * N;
 
         for (int m = tOrder; m < N; ++m) {
@@ -173,7 +184,7 @@ Eigen::MatrixXd TrajectoryGeneratorWaypoint::PolyQPGenerationNumeric(
                 PTriplets.emplace_back(
                     currentSegmentIdxOffset + m,
                     currentSegmentIdxOffset + n,
-                    PFactorial[m]*PFactorial[n]/(
+                    Time(k)*PFactorial[m]*PFactorial[n]/(
                         (m + n - (tOrder << 1) + 1) *
                         PTimePower(k) * PTimePower(k)
                     )
@@ -221,11 +232,6 @@ Eigen::MatrixXd TrajectoryGeneratorWaypoint::PolyQPGenerationNumeric(
         for (int n = c; n < N; ++n) {
             AFactorial.insert(
                 {GetAFactorialKey(n, c), (n - c + 1)*AFactorial[GetAFactorialKey(n, c - 1)]}
-            );
-
-            ROS_WARN(
-                "[PolyGenNumeric]: AFactorial[%d, %d] %.2f", 
-                n, c, AFactorial[GetAFactorialKey(n, c)]
             );
         }
     };
@@ -297,8 +303,8 @@ Eigen::MatrixXd TrajectoryGeneratorWaypoint::PolyQPGenerationNumeric(
                 // should equal to the start of current trajectory segment:
                 ATriplets.emplace_back(
                     currentConstraintIdxOffset,
-                    k * N,
-                    -1.0 
+                    k * N + c,
+                    -AFactorial[GetAFactorialKey(c, c)]/ATimePower[c](k) 
                 );
 
                 // set next constraint:
@@ -322,41 +328,32 @@ Eigen::MatrixXd TrajectoryGeneratorWaypoint::PolyQPGenerationNumeric(
 
     osqp::OsqpSolver solver;
     osqp::OsqpSettings settings;
+
     // init solver:
-    const auto status = solver.Init(instance, settings);
-    // solve.
-    const auto exitCode = solver.Solve();
-    // get optimal solution
-    const auto optimalObject = solver.objective_value();
-    const auto optimalCoeffs = solver.primal_solution();
+    if (solver.Init(instance, settings).ok()) {
+        // solve.
+        const auto exitCode = solver.Solve();
 
-    //
-    // format output:
-    //
-    for (int k = 0; k < K; ++k) {
-        result.row(k) = optimalCoeffs.segment(k * N, N);
-        
-        ROS_WARN(
-            "[PolyGenNumeric]: segment[%d] %.2f -> %.2f", 
-            k, result(k, 0), result.row(k).sum()
-        );
+        if (exitCode == osqp::OsqpExitCode::kOptimal) {
+            // get optimal solution
+            const auto optimalObject = solver.objective_value();
+            const auto optimalCoeffs = solver.primal_solution();
 
-        for (double t = 0.0; t <= 1.0; t += 0.1) {
-            Eigen::VectorXd time = Eigen::VectorXd::Zero(N);
-
-            for (int n = 0; n < N; ++n) {
-                time(n) = ((n == 0) ? 1.0 : t*time(n - 1));
+            //
+            // format output:
+            //
+            for (int k = 0; k < K; ++k) {
+                result.row(k) = optimalCoeffs.segment(k * N, N);
             }
 
-            ROS_WARN(
-                "[PolyGenNumeric]: \t %.2f @ %.2f", 
-                k, result.row(k).dot(time), t
-            );
+            ROS_INFO("[Minimum Snap, Numeric]: Optimal objective is %.2f.", optimalObject);
+        } else {
+            // defaults to Eigen::MatrixXd::Zero():
+            ROS_WARN("[Minimum Snap, Numeric]: Failed to find the optimal solution.");
         }
-        ROS_WARN(
-            "[PolyGenNumeric]: segment[%d] done\b", 
-            k
-        );
+    } else {
+        // defaults to Eigen::MatrixXd::Zero():
+        ROS_WARN("[Minimum Snap, Numeric]: Failed to init OSQP solver.");
     }
 
     // done:

@@ -41,7 +41,13 @@ Vector3d _startVel = Vector3d::Zero();
 void visWayPointTraj( MatrixXd polyCoeff, VectorXd time);
 void visWayPointPath(MatrixXd path);
 Vector3d getPosPoly( MatrixXd polyCoeff, int k, double t );
-VectorXd timeAllocation( MatrixXd Path);
+
+enum TimeAllocation {
+    SEGMENT_TRAPEZOIDAL,
+    GLOBAL_TRAPEZOIDAL
+};
+VectorXd AllocateTime( MatrixXd Path, TimeAllocation strategy=TimeAllocation::GLOBAL_TRAPEZOIDAL);
+
 void trajGeneration(Eigen::MatrixXd path);
 void rcvWaypointsCallBack(const nav_msgs::Path & wp);
 
@@ -80,7 +86,7 @@ void trajGeneration(Eigen::MatrixXd path)
     vel.row(0) = _startVel;
 
     // give an arbitraty time allocation, all set all durations as 1 in the commented function.
-    _polyTime  = timeAllocation(path);
+    _polyTime  = AllocateTime(path);
 
     // generate a minimum-snap piecewise monomial polynomial-based trajectory
     _polyCoeff = trajectoryGeneratorWaypoint.PolyQPGeneration(
@@ -103,15 +109,16 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "traj_node");
     ros::NodeHandle nh("~");
 
-    nh.param("planning/vel",   _Vel,   1.0 );
-    nh.param("planning/acc",   _Acc,   1.0 );
-    nh.param("planning/dev_order", _dev_order,  2 );
-    nh.param("planning/min_order", _min_order,  3 );
+    nh.param("planning/max_vel", _Vel, 1.0);
+    nh.param("planning/max_acc", _Acc, 1.0);
+    nh.param("planning/t_order", _obj_order, 4);
+    nh.param("planning/c_order", _dev_order, 2);
+    nh.param("planning/min_c_order", _min_order, 3);
     nh.param("vis/vis_traj_width", _vis_traj_width, 0.15);
 
     //_poly_numID is the maximum order of polynomial
-    _obj_order = 4;
-    _poly_num1D = ((_dev_order + 1) << 1);
+    _dev_order = std::max(_dev_order, _min_order);
+    _poly_num1D = TrajectoryGeneratorWaypoint::GetNumCoeffs(_dev_order);
 
     //state of start point
     _startPos(0)  = 0;
@@ -254,29 +261,20 @@ void visWayPointPath(MatrixXd path)
     _wp_path_vis_pub.publish(line_list);
 }
 
-Vector3d getPosPoly( MatrixXd polyCoeff, int k, double t )
+Eigen::Vector3d getPosPoly(Eigen::MatrixXd polyCoeff, int k, double t )
 {
     Vector3d ret;
 
     for ( int dim = 0; dim < 3; dim++ )
     {
-        VectorXd coeff = (polyCoeff.row(k)).segment( dim * _poly_num1D, _poly_num1D );
-        VectorXd time  = VectorXd::Zero( _poly_num1D );
-        
-        for(int j = 0; j < _poly_num1D; j ++)
-          if(j==0)
-              time(j) = 1.0;
-          else
-              time(j) = time(j - 1)*t;
-
-        ret(dim) = coeff.dot(time);
+        const Eigen::VectorXd &coeff = (polyCoeff.row(k)).segment( dim * _poly_num1D, _poly_num1D );
+        ret(dim) = TrajectoryGeneratorWaypoint::EvaluatePoly(coeff, t);
     }
 
     return ret;
 }
 
-VectorXd timeAllocation( MatrixXd Path)
-{ 
+Eigen::VectorXd DoGlobalTrapezoidalTimeAllocation(Eigen::MatrixXd Path) {
     const int K = (Path.rows() - 1);
     
     Eigen::VectorXd time = Eigen::VectorXd::Zero(K);
@@ -294,9 +292,6 @@ VectorXd timeAllocation( MatrixXd Path)
     for (int k = 1; k <= K; ++k) {
         // calculate segment displacement:
         segDisplacement(k - 1) = (Path.row(k) - Path.row(k - 1)).norm();
-        ROS_WARN(
-            "[Time Allocation] seg. disp. of %.2f at %d", segDisplacement(k - 1), k
-        );
         // update accumulated displacement:
         totalDisplacement += segDisplacement(k - 1);
     }
@@ -335,12 +330,6 @@ VectorXd timeAllocation( MatrixXd Path)
         totalTime = 2.0 * (_Vel / _Acc) + (totalDisplacement - 2.0 * constAccDisplacement) / _Vel;
     }
 
-    ROS_WARN(
-        "[Time Allocation] total disp. %.2f, total time %.2f, acc. disp %.2f, dec. disp %.2f", 
-        totalDisplacement, totalTime,
-        accDisplacement, decDisplacement
-    );
-
     //
     // do time allocation:
     //
@@ -365,13 +354,80 @@ VectorXd timeAllocation( MatrixXd Path)
 
         // allocate time:
         time(k) = nextTime - currTime;
-        ROS_WARN(
-            "[Time Allocation] %.2f at %d", time(k), k + 1
-        );
 
         // proceed to next segment;
         currDisplacement = nextDisplacement;
         currTime = nextTime;
+    }
+
+    return time;    
+}
+
+Eigen::VectorXd DoSegmentTrapezoidalTimeAllocation(Eigen::MatrixXd Path)
+{ 
+    const int K = (Path.rows() - 1);
+    
+    Eigen::VectorXd time = Eigen::VectorXd::Zero(K);
+    
+    /*
+        STEP 1: use "trapezoidal velocity" heuristic for time allocation
+    */
+    const double constAccDisplacement = (
+        (_Vel * _Vel ) / (2.0 * _Acc)
+    );
+
+    // calculate segment  displacement:
+    double totalDisplacement{0.0};
+    Eigen::VectorXd segDisplacement = Eigen::VectorXd::Zero(K);
+    for (int k = 1; k <= K; ++k) {
+        // calculate segment displacement:
+        segDisplacement(k - 1) = (Path.row(k) - Path.row(k - 1)).norm();
+    }
+
+    //
+    // do time allocation:
+    //
+    double maxVel{0.0};
+    double segTime{0.0};
+    for (int k = 0; k < K; ++k) {
+        // CASE 1: trapezoidal is reduced to triangle
+        if (segDisplacement(k) <= 2.0 * constAccDisplacement) {
+            // set max. vel:
+            maxVel = std::sqrt(_Acc * segDisplacement(k));
+
+            // set total duration:
+            segTime = 2.0 * (maxVel / _Acc);
+        } 
+        // CASE 2: stay with trapezoidal 
+        else {
+            // set max. vel:
+            maxVel = _Vel;
+
+            // set total duration:
+            segTime = 2.0 * (maxVel / _Acc) + (segDisplacement(k) - 2.0 * constAccDisplacement) / _Vel;
+        }
+
+        // allocate time:
+        time(k) = segTime;
+    }
+
+    return time;
+}
+
+Eigen::VectorXd AllocateTime(Eigen::MatrixXd Path, TimeAllocation strategy) {
+    const int K = (Path.rows() - 1);
+    
+    Eigen::VectorXd time = Eigen::VectorXd::Zero(K);
+
+    switch (strategy) {
+        case TimeAllocation::SEGMENT_TRAPEZOIDAL:
+            return DoSegmentTrapezoidalTimeAllocation(Path);
+            break;
+        case TimeAllocation::GLOBAL_TRAPEZOIDAL:
+            return DoGlobalTrapezoidalTimeAllocation(Path);
+            break;
+        default:
+            break;
     }
 
     return time;
