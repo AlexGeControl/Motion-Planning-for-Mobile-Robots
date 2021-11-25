@@ -6,18 +6,20 @@
       <remap from="~odom"      to="/msckf_vio/odometry"/>
       <remap from="~joy"      to="/djiros/rc"/>
       
-      <param name="planning/max_vel"     value="1.0"  />
-      <param name="planning/max_acc"     value="0.5"  />
-      <param name="planning/t_order"     value="4"    />
-      <param name="planning/c_order"     value="2"    />
-      <param name="planning/min_c_order" value="2"    />
-      <param name="vis/vis_traj_width"   value="0.15" />
+      <param name="planning/max_vel"         value="1.0"      />
+      <param name="planning/max_acc"         value="0.5"      />
+      <param name="planning/t_order"         value="4"        />
+      <param name="planning/c_order"         value="2"        />
+      <param name="planning/min_c_order"     value="2"        />
+      <param name="planning/time_allocation" value="global"   />
+      <param name="planning/solution_method" value="analytic" />
+      <param name="vis/vis_traj_width"       value="0.15"     />
 
   </node>
 
   <node pkg="waypoint_generator" name="waypoint_generator" type="waypoint_generator" output="screen">        
       <remap from="~goal" to="/goal"/>
-      <param name="waypoint_type" value="eight"/>
+      <param name="waypoint_type" value="circle"/>
   </node>
 
   <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find waypoint_trajectory_generator)/launch/rviz_config/test_traj.rviz" />

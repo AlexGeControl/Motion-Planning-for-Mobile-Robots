@@ -21,10 +21,21 @@
 using namespace std;
 using namespace Eigen;
 
+enum TimeAllocation {
+    SEGMENT_TRAPEZOIDAL,
+    GLOBAL_TRAPEZOIDAL
+};
+
 // Param from launch file
 double _vis_traj_width;
 double _Vel, _Acc;
 int    _obj_order, _dev_order, _min_order;
+
+std::string _time_allocation_spec;
+TimeAllocation _time_allocation;
+
+std::string _solution_method_spec;
+TrajectoryGeneratorWaypoint::Method _solution_method;
 
 // ros related
 ros::Subscriber _way_pts_sub;
@@ -42,10 +53,6 @@ void visWayPointTraj( MatrixXd polyCoeff, VectorXd time);
 void visWayPointPath(MatrixXd path);
 Vector3d getPosPoly( MatrixXd polyCoeff, int k, double t );
 
-enum TimeAllocation {
-    SEGMENT_TRAPEZOIDAL,
-    GLOBAL_TRAPEZOIDAL
-};
 VectorXd AllocateTime( MatrixXd Path, TimeAllocation strategy=TimeAllocation::GLOBAL_TRAPEZOIDAL);
 
 void trajGeneration(Eigen::MatrixXd path);
@@ -86,7 +93,7 @@ void trajGeneration(Eigen::MatrixXd path)
     vel.row(0) = _startVel;
 
     // give an arbitraty time allocation, all set all durations as 1 in the commented function.
-    _polyTime  = AllocateTime(path);
+    _polyTime  = AllocateTime(path, _time_allocation);
 
     // generate a minimum-snap piecewise monomial polynomial-based trajectory
     _polyCoeff = trajectoryGeneratorWaypoint.PolyQPGeneration(
@@ -95,7 +102,8 @@ void trajGeneration(Eigen::MatrixXd path)
         path, 
         vel, 
         acc, 
-        _polyTime
+        _polyTime,
+        _solution_method
     );
 
     visWayPointPath(path);
@@ -109,16 +117,22 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "traj_node");
     ros::NodeHandle nh("~");
 
-    nh.param("planning/max_vel", _Vel, 1.0);
-    nh.param("planning/max_acc", _Acc, 1.0);
-    nh.param("planning/t_order", _obj_order, 4);
-    nh.param("planning/c_order", _dev_order, 2);
-    nh.param("planning/min_c_order", _min_order, 3);
-    nh.param("vis/vis_traj_width", _vis_traj_width, 0.15);
+    nh.param("planning/max_vel",                          _Vel,                    1.00);
+    nh.param("planning/max_acc",                          _Acc,                    0.50);
+    nh.param("planning/t_order",                    _obj_order,                       4);
+    nh.param("planning/c_order",                    _dev_order,                       2);
+    nh.param("planning/min_c_order",                _min_order,                       2);
+    nh.param("planning/time_allocation", _time_allocation_spec,   std::string("global"));
+    nh.param("planning/solution_method", _solution_method_spec, std::string("analytic"));
+    nh.param("planning/min_c_order",                _min_order,                       2);
+    nh.param("vis/vis_traj_width",             _vis_traj_width,                    0.15);
 
     //_poly_numID is the maximum order of polynomial
-    _dev_order = std::max(_dev_order, _min_order);
+    _dev_order = std::max(_min_order, _dev_order);
     _poly_num1D = TrajectoryGeneratorWaypoint::GetNumCoeffs(_dev_order);
+
+    _time_allocation = ((_time_allocation_spec == "global") ? TimeAllocation::GLOBAL_TRAPEZOIDAL : TimeAllocation::SEGMENT_TRAPEZOIDAL);
+    _solution_method = ((_solution_method_spec == "analytic") ? TrajectoryGeneratorWaypoint::Method::Analytic : TrajectoryGeneratorWaypoint::Method::Numeric);
 
     //state of start point
     _startPos(0)  = 0;
@@ -377,7 +391,6 @@ Eigen::VectorXd DoSegmentTrapezoidalTimeAllocation(Eigen::MatrixXd Path)
     );
 
     // calculate segment  displacement:
-    double totalDisplacement{0.0};
     Eigen::VectorXd segDisplacement = Eigen::VectorXd::Zero(K);
     for (int k = 1; k <= K; ++k) {
         // calculate segment displacement:
