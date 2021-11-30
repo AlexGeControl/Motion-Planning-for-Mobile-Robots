@@ -8,7 +8,7 @@
 
 本作业旨在引导您:
 
-* 基于MATLAB Native, 实现RRT Path Finding
+* 基于MATLAB, 实现RRT Path Finding
 
 ---
 
@@ -30,11 +30,11 @@
 
 算法流程如下:
 
-* [Step 1: Random Sample](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L43)
-* [Step 2: Find Closest](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L49)
-* [Step 3: Get Candidate New Node](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L66)
-* [Step 4: Insert into Tree](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L79)
-* [Step 5: Visualize](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L87)
-* [Step 6: Goal Check](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L91)
+* [Step 1: Random Sample](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/bec0e77cc5868bd5df22414ac849c5318e343432/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L43)
+* [Step 2: Find Closest](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/bec0e77cc5868bd5df22414ac849c5318e343432/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L49)
+* [Step 3: Get Candidate New Node](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/bec0e77cc5868bd5df22414ac849c5318e343432/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L66)
+* [Step 4: Insert into Tree](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/bec0e77cc5868bd5df22414ac849c5318e343432/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L79)
+* [Step 5: Visualize](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/bec0e77cc5868bd5df22414ac849c5318e343432/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L87)
+* [Step 6: Goal Check](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/bec0e77cc5868bd5df22414ac849c5318e343432/workspace/assignments/03-path-finding--sample-based/MATLAB/RRT.m#L91)
 
 ---

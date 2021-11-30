@@ -10,11 +10,11 @@ Designed & Implemented by **Ge Yao**, alexgecontrol@qq.com
 
 本Repo为基于**ROS melodic** @ **Ubuntu 18.04**的[移动机器人运动规划/Motion Planning for Mobile Robotics](https://www.shenlanxueyuan.com/course/324)学习环境. 
 
-定位与建图是一个复杂的系统工程. **每一个机器人解决方案, 都有较为复杂的环境依赖**. 然而:
+**移动机器人运动规划开发，有较为复杂的环境依赖**. 然而:
 
-* 部分依赖项由于网络原因(Great Fire Wall & Server IP Block)难以直接获得
+* 部分依赖项由于网络原因(Great Fire Wall & DNS Resolution Pollution)难以直接获得
 
-* 由于课程依赖项的版本, 与本地现有依赖项的版本, 可能有所不同, 直接冒然安装, 可能会导致本地开发环境被破坏
+* 课程所需依赖项的版本, 与本地现有依赖项的版本, 并不兼容，冒然安装可能会导致已有开发环境被破坏
 
 故: 本学习环境将以**Docker Image**的形式提供, 以实现与Native PC环境的隔离. 
 
@@ -44,26 +44,27 @@ Designed & Implemented by **Ge Yao**, alexgecontrol@qq.com
 
 当Native PC与Course Docker Environment均准备就绪时, 即可开始使用本开发环境:
 
-* **第一次使用时, 请首先下载课程配套的KITTI测试数据**[here](workspace/data/kitti/README.md).
+* **第一次使用时, 请首先下载课程配套的测试数据**[here](README.md).
 
 * 之后, 即可通过**本地VSCode开发, Docker内部编译测试**的模式, 完成课程作业.
 
 #### 获取课程数据
 
-在第一次使用时, 需要将**课程配套的修复后KITTI数据**下载至本地文件系统. 具体操作方法参考[点击链接进入](workspace/data/kitti/README.md)
+在第一次使用时, 需要将**课程配套的测试数据**下载至本地文件系统. 具体操作方法参考[点击链接进入](README.md)
 
 #### 开发, 编译与测试
 
-启动Docker环境后, **Docker**中的/workspace目录, 会被映射到**当前Repo**中的workspace目录.
+启动Docker环境后, **当前Repo**中的workspace目录, 会被映射到**Docker**中的/workspace目录.
 
 使用该Workspace进行开发, 编译与测试的方法如下:
 
 * 在**当前Repo的workspace**下, 启动[VSCode](https://code.visualstudio.com/), 编辑源代码:
 
-<img src="doc/development-environment.png" alt="Development Environment, Native VS Code in Mounting Point" width="100%">
+<img src="doc/images/development-environment.png" alt="Development Environment, Native VS Code in Mounting Point" width="100%">
 
-* 在**Docker /workspace**下, 进行编译. 具体的编译方法, 请参考[作业1 环境搭建](workspace/assignments/01-introduction/README.md)
+* 在**Docker /workspace**下, 进行编译. 具体的编译方法, 请参考[作业1 环境搭建](workspace/assignments/01-env-setup/ROS/README.md)
 
+<img src="doc/images/testing-environment.png" alt="Testing Environment, Docker Inside through VNC" width="100%">
 
 ---
 

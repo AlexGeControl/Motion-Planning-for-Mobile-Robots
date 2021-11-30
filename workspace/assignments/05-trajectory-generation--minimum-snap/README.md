@@ -19,5 +19,5 @@
 
 ## Solution Guide
 
-* [MATLAB Guide](MATLAB/README.md)
-* [ROS C++ Guide](ROS/README.md)
+* [MATLAB Guide](MATLAB/)
+* [ROS C++ Guide](ROS/)
