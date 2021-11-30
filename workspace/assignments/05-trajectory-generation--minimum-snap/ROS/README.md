@@ -64,27 +64,27 @@ source devel/setup.bash
 
 **Minimum Snap**的运行结果如下, **Eight Waypoints Set** using **Numeric Solver**:
 
-<img src="doc/images/demo-RViz-eight-numeric.png" alt="Sample Based Path Finding Demo, RViz" width="100%">
+<img src="doc/images/demo-RViz-eight-numeric.png" alt="Minimum Snap Solver, Eight Points, Numeric" width="100%">
 
 **Minimum Snap**的运行结果如下, **Circle Waypoints Set** using **Numeric Solver**:
 
-<img src="doc/images/demo-RViz-circle-numeric.png" alt="Sample Based Path Finding Demo, RViz" width="100%">
+<img src="doc/images/demo-RViz-circle-numeric.png" alt="Minimum Snap Solver, Circle, Numeric" width="100%">
 
-**Minimum Snap**的运行结果如下, **Eight Waypoints Set** using **Numeric Solver**:
+**Minimum Snap**的运行结果如下, **Eight Waypoints Set** using **Analytic Solver**:
 
-<img src="doc/images/demo-RViz-eight-analytic.png" alt="Sample Based Path Finding Demo, RViz" width="100%">
+<img src="doc/images/demo-RViz-eight-analytic.png" alt="Minimum Snap Solver, Eight Points, Analytic" width="100%">
 
-**Minimum Snap**的运行结果如下, **Circle Waypoints Set** using **Numeric Solver**:
+**Minimum Snap**的运行结果如下, **Circle Waypoints Set** using **Analytic Solver**:
 
-<img src="doc/images/demo-RViz-circle-analytic.png" alt="Sample Based Path Finding Demo, RViz" width="100%">
+<img src="doc/images/demo-RViz-circle-analytic.png" alt="Minimum Snap Solver, Circle, Analytic" width="100%">
 
 算法流程如下:
 
-* [Step 1: Time Allocation](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_node.cpp#L430)
-    * [Step 1.1: Time Allocation, Segment Trapezoidal](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_node.cpp#L380)
-    * [Step 1.2: Time Allocation, Global Trapezoidal](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_node.cpp#L291)
-* [Step 2: Minimum Snap Solver Interface](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_waypoint.cpp#L66)
-    * [Step 2.1: Numeric Solver with OSQP C++](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_waypoint.cpp#L135)
-    * [Step 2.1: Analytic Solver with C++ Eigen](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/206a2ba1076c6c7b2765fafb4f13801730941d74/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_waypoint.cpp#L402)
+* [Step 1: Time Allocation](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_node.cpp#L430)
+    * [Step 1.1: Time Allocation, Segment Trapezoidal](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_node.cpp#L380)
+    * [Step 1.2: Time Allocation, Global Trapezoidal](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_node.cpp#L291)
+* [Step 2: Minimum Snap Solver Interface](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_waypoint.cpp#L66)
+    * [Step 2.1: Numeric Solver with OSQP C++](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_waypoint.cpp#L135)
+    * [Step 2.1: Analytic Solver with C++ Eigen](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/ROS/src/waypoint_trajectory_generator/src/trajectory_generator_waypoint.cpp#L402)
 
 ---

@@ -1,79 +1,104 @@
-function [Aeq beq]= getAbeq(n_seg, n_order, waypoints, ts, start_cond, end_cond)
-    n_all_poly = n_seg*(n_order+1);
-    %#####################################################
-    % p,v,a,j constraint in start, 
-    Aeq_start = zeros(4, n_all_poly);
-    beq_start = zeros(4, 1);
-    % STEP 2.1: write expression of Aeq_start and beq_start
-    %
-    %
-    %
-    %
+function [Aeq, beq]= getAbeq(K, t_order, waypoints, ts, start_cond, end_cond)    
+    % num. of polynomial coeffs:
+    N = 2*t_order;
     
-    %#####################################################
-    % p,v,a constraint in end
-    Aeq_end = zeros(4, n_all_poly);
-    beq_end = zeros(4, 1);
-    % STEP 2.2: write expression of Aeq_end and beq_end
-    %
-    %
-    %
-    %
+    % num. of constraints:
+    C = (K + 1)*t_order + (K - 1);
     
-    %#####################################################
-    % position constrain in all middle waypoints
-    Aeq_wp = zeros(n_seg-1, n_all_poly);
-    beq_wp = zeros(n_seg-1, 1);
-    % STEP 2.3: write expression of Aeq_wp and beq_wp
-    %
-    %
-    %
-    %
+    % ###############################################
+    % 1. pre-compute constants used in A construction
+    % ###############################################
+    % 1.1 factorial from derivative
+    A_factorial_k = [];
+    A_factorial_v = [];
     
-    %#####################################################
-    % position continuity constrain between each 2 segments
-    Aeq_con_p = zeros(n_seg-1, n_all_poly);
-    beq_con_p = zeros(n_seg-1, 1);
-    % STEP 2.4: write expression of Aeq_con_p and beq_con_p
-    %
-    %
-    %
-    %
+    index = 1;
     
-    %#####################################################
-    % velocity continuity constrain between each 2 segments
-    Aeq_con_v = zeros(n_seg-1, n_all_poly);
-    beq_con_v = zeros(n_seg-1, 1);
-    % STEP 2.5: write expression of Aeq_con_v and beq_con_v
-    %
-    %
-    %
-    %
-
-    %#####################################################
-    % acceleration continuity constrain between each 2 segments
-    Aeq_con_a = zeros(n_seg-1, n_all_poly);
-    beq_con_a = zeros(n_seg-1, 1);
-    % STEP 2.6: write expression of Aeq_con_a and beq_con_a
-    %
-    %
-    %
-    %
+    for c = 1:t_order
+        for n = c:N
+            A_factorial_k(index) = (c-1)*N + n - 1;
+            A_factorial_v(index) = factorial(n - 1) / factorial(n - c);
+            
+            index = index + 1;
+        end
+    end
+    A_factorial = containers.Map(A_factorial_k, A_factorial_v);
     
-    %#####################################################
-    % jerk continuity constrain between each 2 segments
-    Aeq_con_j = zeros(n_seg-1, n_all_poly);
-    beq_con_j = zeros(n_seg-1, 1);
-    % STEP 2.7: write expression of Aeq_con_j and beq_con_j
-    %
-    %
-    %
-    %
+    % ###############################################
+    % 2. populate A & b
+    % ###############################################
+    A_i = [];
+    A_j = [];
+    A_v = [];
     
-    %#####################################################
-    % combine all components to form Aeq and beq   
-    Aeq_con = [Aeq_con_p; Aeq_con_v; Aeq_con_a; Aeq_con_j];
-    beq_con = [beq_con_p; beq_con_v; beq_con_a; beq_con_j];
-    Aeq = [Aeq_start; Aeq_end; Aeq_wp; Aeq_con];
-    beq = [beq_start; beq_end; beq_wp; beq_con];
+    beq = zeros(C, 1);
+    
+    index = 1;
+    c_index = 1;
+    
+    % 2.1 start & goal states:
+    for c = 1:t_order
+        % start state:
+        A_i(index) = c_index;
+        A_j(index) = c;
+        A_v(index) = A_factorial((c-1)*N + c - 1)/(ts(1)^(c - 1));
+        index = index + 1;
+        
+        beq(c_index) = start_cond(c);
+        
+        % move to next constraint:
+        c_index = c_index + 1;
+        
+        % end state:
+        for n = c:N
+            A_i(index) = c_index;
+            A_j(index) = (K - 1)*N + n;
+            A_v(index) = A_factorial((c-1)*N + n - 1)/(ts(K)^(c - 1));
+            index = index + 1;
+        end
+        
+        beq(c_index) = end_cond(c);
+        
+        % move to next constraint:
+        c_index = c_index + 1;
+    end
+    
+    % 2.2 intermediate waypoint passing constraints:
+    for k = 1:(K - 1)
+        % next segment start position:
+        A_i(index) = c_index;
+        A_j(index) = k*N + 1;
+        A_v(index) = 1.0;
+        index = index + 1;
+        
+        % should equal to the specified value:
+        beq(c_index) = waypoints(k+1);
+        
+        % move to next constraint:
+        c_index = c_index + 1;
+    end
+    
+    % 2.3 intermediate waypoint continuity constraints:
+    for c = 1:t_order
+        for k = 1:(K - 1)
+            % current segment end state:
+            for n = c:N
+                A_i(index) = c_index;
+                A_j(index) = (k - 1)*N + n;
+                A_v(index) = A_factorial((c-1)*N + n - 1)/(ts(k)^(c - 1));
+                index = index + 1;
+            end
+            
+            % should equal to next segment start state:
+            A_i(index) = c_index;
+            A_j(index) = k*N + c;
+            A_v(index) = -A_factorial((c-1)*N + c - 1)/(ts(k + 1)^(c - 1));
+            index = index + 1;
+            
+            % move to next constraint:
+            c_index = c_index + 1;
+        end
+    end
+    
+    Aeq = sparse(A_i, A_j, A_v);
 end
