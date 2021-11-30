@@ -30,7 +30,7 @@
 
 算法流程如下:
 
-* [Step 1: Random Sample](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob//workspace/assignments/03-path-finding--sample-based/MATLAB/src/RRT.m#L43)
+* [Step 1: Random Sample](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/402d2fe622e42f3b64878ce730ef1b179a8a031a/workspace/assignments/03-path-finding--sample-based/MATLAB/src/RRT.m#L43)
 * [Step 2: Find Closest](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/402d2fe622e42f3b64878ce730ef1b179a8a031a/workspace/assignments/03-path-finding--sample-based/MATLAB/src/RRT.m#L49)
 * [Step 3: Get Candidate New Node](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/402d2fe622e42f3b64878ce730ef1b179a8a031a/workspace/assignments/03-path-finding--sample-based/MATLAB/src/RRT.m#L66)
 * [Step 4: Insert into Tree](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/402d2fe622e42f3b64878ce730ef1b179a8a031a/workspace/assignments/03-path-finding--sample-based/MATLAB/src/RRT.m#L79)
