@@ -28,10 +28,10 @@
 算法流程如下:
 
 * **Step 1: Minimum Snap Solver**
-    * [Step 1.1: Numeric Solver](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/numeric-solver.m)
-        * [GetQ](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/getQ.m)
-        * [GetAbeq](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/getAbeq.m)
-    * [Step 1.2: Analytic Solver](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/analytic-solver.m)
-        * [GetM](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/getM.m)
-        * [GetCt](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1eb40c7056e4768e630039aee60c0d492b20f13c/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/getCt.m)
+    * [Step 1.1: Numeric Solver](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/61a8e5928a100ced138e426e62e7aa7096f8b0be/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/numeric-solver.m)
+        * [GetQ](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/61a8e5928a100ced138e426e62e7aa7096f8b0be/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/getQ.m)
+        * [GetAbeq](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/61a8e5928a100ced138e426e62e7aa7096f8b0be/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/getAbeq.m)
+    * [Step 1.2: Analytic Solver](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/61a8e5928a100ced138e426e62e7aa7096f8b0be/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/analytic-solver.m)
+        * [GetM](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/61a8e5928a100ced138e426e62e7aa7096f8b0be/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/getM.m)
+        * [GetCt](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/61a8e5928a100ced138e426e62e7aa7096f8b0be/workspace/assignments/05-trajectory-generation--minimum-snap/MATLAB/getCt.m)
 ---
