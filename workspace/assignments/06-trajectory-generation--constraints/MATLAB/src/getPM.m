@@ -1,4 +1,4 @@
-function [P, M] = getP(K, t_order, ts)
+function [P, M] = getPM(K, t_order, ts)
     % num. of polynomial coeffs: 
     N = 2*t_order;
 
@@ -9,14 +9,10 @@ function [P, M] = getP(K, t_order, ts)
     % ###############################################
     % get M, mapping from bernstein to monomial
     % ###############################################
-    M_elem = getM(t_order);
-    M = zeros(K*N, K*N);
-    for k=1:K
-        segment_index = ((k - 1)*N + 1):(k*N);
-        M(segment_index,segment_index) = M_elem;
-    end
+    M = getM(K, t_order);
     % ###############################################
     % build objective matrix for control points
     % ###############################################
-    P = nearestSPD(M'*Q*M);
+    % P = nearestSPD(full(M'*Q*M));
+    P = M'*Q*M;
 end
