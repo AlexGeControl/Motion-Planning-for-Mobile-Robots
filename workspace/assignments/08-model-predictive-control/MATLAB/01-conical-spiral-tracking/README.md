@@ -25,10 +25,10 @@ Result Trajectory          |Tracking Errors
 |:----------:|:---------------------------------------------:|:-------:|
 |     dt     |            MPC prediction interval            |   0.2   |
 |      K     |             MPC prediction horizon            |    20   |
-|    wPos    |   objective function weight, position error   |   50.0  |
-|    wVel    |   objective function weight, velocity error   |   2.0   |
-|    wAcc    | objective function weight, acceleration error |   2.0   |
-|    wJer    |   objective function weight, jerk magnitude   |   0.5   |
+|    wPos    |   objective function weight, position error   |  100.0  |
+|    wVel    |   objective function weight, velocity error   |   1.0   |
+|    wAcc    | objective function weight, acceleration error |   1.0   |
+|    wJer    |   objective function weight, jerk magnitude   |   1.0   |
 | vxy_limits |              velocity limits, X-Y             | [-6,+6] |
 | axy_limits |            acceleration limits, X-Y           | [-3,+3] |
 | jxy_limits |                jerk limits, X-Y               | [-3,+3] |

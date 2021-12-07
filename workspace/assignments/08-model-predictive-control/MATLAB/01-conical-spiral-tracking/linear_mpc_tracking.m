@@ -8,10 +8,10 @@ T     = 40;
 dt    = 0.2;                 % time interval
 K     = 20;                  % prediction horizon
 
-w_pos = 50.0;                % position tracking weight
-w_vel =  2.0;                % velocity trackng weight
-w_acc =  2.0;                % acceleration tracking weight
-w_jer =  0.5;                % control strength regulation
+w_pos = 100.0;               % position tracking weight
+w_vel =   1.0;               % velocity trackng weight
+w_acc =   1.0;               % acceleration tracking weight
+w_jer =   1.0;               % control strength regulation
 
 vel_limits = [
     [-6, +6];
@@ -35,6 +35,8 @@ jer_limits = [
 % output trajectory:
 N = (T / dt);
 state_index = 1;
+
+timestamps = zeros(N, 1);
 
 P_act = zeros(N, 3);
 V_act = zeros(N, 3);
@@ -115,6 +117,8 @@ for t = 0.2:dt:40
     end
 
     % log the states:
+    timestamps(state_index) = state_index;
+
     P_act(state_index, :) = p_0;
     V_act(state_index, :) = v_0;
     A_act(state_index, :) = a_0;
@@ -141,6 +145,7 @@ figure;
 err_pos = vecnorm(P_req - P_act, 2, 2);
 err_vel = vecnorm(V_req - V_act, 2, 2);
 err_acc = vecnorm(A_req - A_act, 2, 2);
-plot([err_pos, err_vel, err_acc]);
+plot(timestamps, [err_pos, err_vel, err_acc]);
 grid on;
+xlabel('t(s)');
 legend('Pos. Err.','Vel. Err.','Acc. Err.');
