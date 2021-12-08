@@ -10,11 +10,11 @@
 
 * MATLAB
     * 基于MATLAB, 实现基于Model Predictive Control的Conical Spiral Tracking.
-    * 基于MATLAB, 实现基于Model Predictive Control的Conical Spiral Tracking.
+    * 基于MATLAB, 实现基于NN Scorer & Model Predictive Control的Differential Drive Vehicle Navigation.
     
 ---
 
 ## Solution Guide
 
 * [Conical Spiral Tracking Guide](01-conical-spiral-tracking/)
-* [NN + PSO Control Guide](02-nn-pso-control/)
+* [Differential Drive Vehicle Navigation Guide](02-diff-drive-navigation/)
