@@ -9,18 +9,15 @@ function [success,vL,aL,h] = second_order_trajectory(a_0, v_f)
     v_0 = 0;
     a_f = 0;
 
-
     H = eye(K);
     J2A=zeros(K);
     J2V=zeros(K);
 
     for i = 1:K
         J2A(i,1:i) = ones(1,i);
-    end
 
-    for i = 1:K
         for j = 1:i
-            J2V(i,j) = (i-j+0.5);
+            J2V(i,j) = 1/2*(2*(i-j) + 1);
         end
     end
 

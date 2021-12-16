@@ -1,0 +1,58 @@
+<launch>
+<arg name="map_size_x" default="15.0"/>
+<arg name="map_size_y" default="15.0"/>
+<arg name="map_size_z" default="3.0"/>
+<arg name="map_frame_name"  default="odom"/>
+
+<arg name="init_x" default="-8.5"/>
+<arg name="init_y" default="-8.5"/>
+<arg name="init_z" default=" 0.5"/>
+
+<arg name="sensing_horizon"  default="8.0" />
+<arg name="sensing_rate"     default="30.0"/>
+<arg name="estimation_rate"  default="30.0"/>
+
+<!-- Random Map Generator -->
+<node pkg ="map_generator" name ="random_complex" type ="random_complex" output = "screen">    
+    <remap from="~odometry"       to="/drone_1/visual_slam/odom"/>
+
+    <param name="init_state_x"   value="$(arg init_x)"/>
+    <param name="init_state_y"   value="$(arg init_y)"/>
+
+    <param name="map/x_size"     value="$(arg map_size_x)" />
+    <param name="map/y_size"     value="$(arg map_size_y)" />
+    <param name="map/z_size"     value="$(arg map_size_z)" />
+    <param name="map_frame_name"     value="$(arg map_frame_name)"/>
+
+    <param name="map/circle_num" value="0"/>        
+    <param name="map/obs_num"    value="100"/>        
+    <param name="map/resolution" value="0.1"/>     
+
+    <param name="ObstacleShape/lower_rad" value="0.1"/>
+    <param name="ObstacleShape/upper_rad" value="0.7"/>
+    <param name="ObstacleShape/lower_hei" value="1.0"/>
+    <param name="ObstacleShape/upper_hei" value="2.5"/>
+
+    <param name="CircleShape/lower_circle_rad"   value="0.6"/>        
+    <param name="CircleShape/upper_circle_rad"   value="3.5"/>        
+    
+    <param name="sensing/rate"   value="2.0"/>        
+</node>
+
+<!-- Map Info Render -->
+<node pkg="map_render" type="pcl_render_node" name="pcl_render_node" output="screen">
+    <param name="sensing_horizon"  value="$(arg sensing_horizon)" />
+    <param name="sensing_rate"     value="$(arg sensing_rate)"/>
+    <param name="estimation_rate"  value="$(arg estimation_rate)"/>
+    <param name="map/x_size"     value="$(arg map_size_x)"/>
+    <param name="map/y_size"     value="$(arg map_size_y)"/>
+    <param name="map/z_size"     value="$(arg map_size_z)"/>
+    <param name="map_frame_name"     value="$(arg map_frame_name)"/>
+
+    <remap from="~global_map" to="/random_complex/global_map"/>
+    <remap from="~global_ground" to="/random_complex/global_ground"/>
+    <remap from="~local_map"  to="/click_obstacle_generation/click_new_obs"/>
+    <remap from="~odometry"   to="/drone_1/visual_slam/odom"/>
+</node>
+
+</launch>

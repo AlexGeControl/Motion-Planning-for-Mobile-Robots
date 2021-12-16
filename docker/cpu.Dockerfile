@@ -108,6 +108,8 @@ RUN apt-fast update --fix-missing && \
         libdw-dev libatlas-base-dev libsuitesparse-dev \
         libcholmod3 libcxsparse3 \
         libmetis-dev \
+        # optional dependencies for armadillo https://gitlab.com/conradsnicta/armadillo-code#5-linux-and-macos-installation
+        libparpack2-dev libsuperlu-dev \
         #
         # 3D graphics:
         #
@@ -192,7 +194,7 @@ ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib:/usr/local/lib/x86_64-linu
 
 # install latest CMake:
 WORKDIR /tmp/installers
-RUN git clone https://github.com/Kitware/CMake -o CMake && \
+RUN git clone https://github.com/Kitware/CMake -b release -o CMake && \
     # config:
     cd CMake && chmod u+x ./bootstrap && ./bootstrap && \
     # build:
@@ -202,7 +204,7 @@ RUN git clone https://github.com/Kitware/CMake -o CMake && \
     # done:
     ldconfig
 
-# install GoogleTest latest:
+# install GoogleTest latest, release 1.11.0:
 WORKDIR /tmp/installers
 RUN git clone https://github.com/google/googletest.git -b release-1.11.0 -o googletest && \
     # config:
@@ -214,9 +216,9 @@ RUN git clone https://github.com/google/googletest.git -b release-1.11.0 -o goog
     # done:
     ldconfig
 
-# install Google Protobuf latest:
+# install Google Protobuf, 3.16.x:
 WORKDIR /tmp/installers
-RUN git clone https://github.com/google/protobuf.git -o protobuf && cd protobuf && \
+RUN git clone https://github.com/google/protobuf.git -b 3.16.x -o protobuf && cd protobuf && \
     # sync:
     git submodule update --init --recursive && \
     # config:
@@ -229,36 +231,37 @@ RUN git clone https://github.com/google/protobuf.git -o protobuf && cd protobuf 
     ldconfig
 
 #
-# install Google abseil:
-#     CMake:   /usr/local/lib/x86_64-linux-gnu/cmake
+# install Google abseil, LTS 2021-11-02:
+#     CMake:   /usr/local/lib/cmake
 #     include: /usr/local/include/absl
-#     lib:     /usr/local/lib/x86_64-linux-gnu
+#     lib:     /usr/local/lib/
 # 
 WORKDIR /tmp/installers
-RUN git clone https://github.com/abseil/abseil-cpp.git -o abseil-cpp  && \
+RUN git clone https://github.com/abseil/abseil-cpp.git -b lts_2021_11_02 -o abseil-cpp  && \
     # config:
     cd abseil-cpp && mkdir build && mkdir install && cd build && \
-    cmake \
-        -DBUILD_TESTING=ON \
-        -DABSL_USE_GOOGLETEST_HEAD=ON \
-        -DCMAKE_CXX_STANDARD=11 \
-    .. && \
+    cmake -DABSL_USE_GOOGLETEST_HEAD=OFF -DCMAKE_CXX_STANDARD=11 -DABSL_ENABLE_INSTALL=ON -DCMAKE_INSTALL_PREFIX=/tmp/installers/abseil-cpp/install .. && \
     # build:
     make -j8 && \
     # install:
     make install && \
+    # install headers:
+    cp -R /tmp/installers/abseil-cpp/install/include/absl /usr/local/include && \
+    # install static libs:
+    cp /tmp/installers/abseil-cpp/install/lib/*.a /usr/local/lib && \
+    # install cmake:
+    cp -R /tmp/installers/abseil-cpp/install/lib/cmake/absl /usr/local/lib/cmake && \
     # done:
     ldconfig
-ENV CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/lib/x86_64-linux-gnu/cmake/absl
 
 #
-# install latest Eigen:
+# install Eigen, 3.4:
 #     CMake:   /usr/local/share/eigen3/cmake/
 #     include: /usr/local/include/eigen3
 #     lib:     none
 # 
 WORKDIR /tmp/installers
-RUN git clone https://gitlab.com/libeigen/eigen -o eigen && \
+RUN git clone https://gitlab.com/libeigen/eigen -b 3.4 -o eigen && \
     # config:
     cd eigen && mkdir build && cd build && cmake .. && \
     # build:
@@ -267,14 +270,13 @@ RUN git clone https://gitlab.com/libeigen/eigen -o eigen && \
     make install && \
     # done:
     ldconfig
-ENV CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/share/eigen3/cmake
 
 #
 # install OSQP:
-#     CMake:   /usr/local/lib/x86_64-linux-gnu/cmake
+#     CMake:   /usr/local/lib/cmake/osqp
 #              /usr/local/lib/cmake/qdldl
 #     include: /usr/local/include/osqp
-#     lib:     /usr/local/lib/x86_64-linux-gnu/
+#     lib:     /usr/local/lib/
 # 
 WORKDIR /tmp/installers
 RUN git clone --recursive https://github.com/osqp/osqp -o osqp  && \
@@ -286,10 +288,9 @@ RUN git clone --recursive https://github.com/osqp/osqp -o osqp  && \
     make install && \
     # done:
     ldconfig
-ENV CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/usr/local/lib/cmake/qdldl:/usr/local/lib/x86_64-linux-gnu/cmake/osqp
 
 # instal OSQP C++:
-#     CMake:   /usr/local/lib/x86_64-linux-gnu/cmake/osqp
+#     CMake:   /usr/local/lib/cmake/osqp
 #              /usr/local/lib/cmake/qdldl
 #     include: /usr/local/include/osqp
 #     lib:     /usr/local/lib/x86_64-linux-gnu
@@ -305,7 +306,19 @@ RUN git clone --recursive https://github.com/google/osqp-cpp -o osqp-cpp  && \
     # install include:
     mkdir /usr/local/include/osqp-cpp && cp /tmp/installers/osqp-cpp/include/osqp++.h /usr/local/include/osqp-cpp && \
     # install lib:
-    cp libosqp-cpp.a /usr/local/lib/x86_64-linux-gnu && \
+    cp libosqp-cpp.a /usr/local/lib && \
+    # done:
+    ldconfig
+
+# install Armadillo 9.870.2
+WORKDIR /tmp/installers
+RUN tar -xvf armadillo-9.870.2.tar.gz && \
+    cd armadillo-9.870.2 && \
+    ./configure && \
+    # build:
+    make -j8 && \
+    # install:
+    make install && \
     # done:
     ldconfig
 

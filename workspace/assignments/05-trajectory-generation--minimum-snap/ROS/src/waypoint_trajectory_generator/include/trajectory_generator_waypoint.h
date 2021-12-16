@@ -1,7 +1,7 @@
 #ifndef _TRAJECTORY_GENERATOR_WAYPOINT_H_
 #define _TRAJECTORY_GENERATOR_WAYPOINT_H_
 
-#include <eigen3/Eigen/Eigen>
+#include <Eigen/Eigen>
 #include <vector>
 
 class TrajectoryGeneratorWaypoint {

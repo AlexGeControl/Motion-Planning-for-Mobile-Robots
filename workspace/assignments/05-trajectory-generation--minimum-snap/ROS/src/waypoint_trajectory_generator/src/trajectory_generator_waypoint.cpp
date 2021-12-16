@@ -1,6 +1,6 @@
 #include "trajectory_generator_waypoint.h"
 
-#include "osqp++.h"
+#include <osqp++.h>
 
 #include <ros/ros.h>
 

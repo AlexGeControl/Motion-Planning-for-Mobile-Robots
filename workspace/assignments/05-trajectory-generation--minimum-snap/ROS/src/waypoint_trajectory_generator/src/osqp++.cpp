@@ -17,18 +17,14 @@
 #include <string>
 #include <type_traits>
 
-// abseil:
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-// Eigen:
 #include "Eigen/Core"
 #include "Eigen/SparseCore"
-// OSQP:
 #include "ctrlc.h"
 #include "osqp.h"
-// OSQP CPP wrapper interface:
 #include "osqp++.h"
 
 // Fails to compile if OSQP's typedefs change. This lets us avoid including
