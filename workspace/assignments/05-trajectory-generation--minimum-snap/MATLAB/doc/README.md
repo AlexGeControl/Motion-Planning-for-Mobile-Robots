@@ -78,18 +78,17 @@ function poly_coef = MinimumSnapQPSolver(waypoints, ts, K, t_order)
     start_cond = [waypoints(1), 0, 0, 0];
     end_cond   = [waypoints(end), 0, 0, 0];
     %#####################################################
-    % STEP 1: compute Q of p'Qp
+    % TODO -- STEP 1: compute Q of p'Qp
     %#####################################################
-    Q = getQ(K, t_order, ts);
+    
     %#####################################################
-    % STEP 2: compute Aeq and beq 
+    % TODO -- STEP 2: compute Aeq and beq 
     %#####################################################
-    [Aeq, beq] = getAbeq(K, t_order, waypoints, ts, start_cond, end_cond);
+    
     %#####################################################
-    % STEP 3: solve the problem with QP 
+    % TODO -- STEP 3: solve the problem with QP 
     %#####################################################
-    f = zeros(size(Q,1),1);
-    poly_coef = quadprog(Q,f,[],[],Aeq, beq);
+
 end
 ```
 
@@ -133,9 +132,7 @@ function Q = getQ(K, t_order, ts)
     for k = 1:K
         for m = t_order:(N - 1)
             for n = t_order:(N - 1)
-                Q_i(index) = (k - 1)*N + m + 1;
-                Q_j(index) = (k - 1)*N + n + 1;
-                Q_v(index) = ts(k)*Q_factorial(m)*Q_factorial(n)/((m + n - 2*t_order + 1)*ts_power(k)*ts_power(k));
+                % TODO -- fill in elements of Q
                 
                 index = index + 1;
             end
@@ -205,26 +202,16 @@ function [Aeq, beq]= getAbeq(K, t_order, waypoints, ts, start_cond, end_cond)
     
     % 2.1 start & goal states:
     for c = 1:t_order
-        % start state:
-        A_i(index) = c_index;
-        A_j(index) = c;
-        A_v(index) = A_factorial((c-1)*N + c - 1)/(ts(1)^(c - 1));
+        % TODO -- fill in start state:
         index = index + 1;
-        
-        beq(c_index) = start_cond(c);
         
         % move to next constraint:
         c_index = c_index + 1;
         
-        % end state:
+        % TODO -- fill in end state:
         for n = c:N
-            A_i(index) = c_index;
-            A_j(index) = (K - 1)*N + n;
-            A_v(index) = A_factorial((c-1)*N + n - 1)/(ts(K)^(c - 1));
             index = index + 1;
         end
-        
-        beq(c_index) = end_cond(c);
         
         % move to next constraint:
         c_index = c_index + 1;
@@ -232,14 +219,10 @@ function [Aeq, beq]= getAbeq(K, t_order, waypoints, ts, start_cond, end_cond)
     
     % 2.2 intermediate waypoint passing constraints:
     for k = 1:(K - 1)
-        % next segment start position:
-        A_i(index) = c_index;
-        A_j(index) = k*N + 1;
-        A_v(index) = 1.0;
+        % TODO -- next segment start position:
         index = index + 1;
         
-        % should equal to the specified value:
-        beq(c_index) = waypoints(k+1);
+        % TODO -- should equal to the specified value:
         
         % move to next constraint:
         c_index = c_index + 1;
@@ -248,18 +231,12 @@ function [Aeq, beq]= getAbeq(K, t_order, waypoints, ts, start_cond, end_cond)
     % 2.3 intermediate waypoint continuity constraints:
     for c = 1:t_order
         for k = 1:(K - 1)
-            % current segment end state:
+            % TODO -- current segment end state:
             for n = c:N
-                A_i(index) = c_index;
-                A_j(index) = (k - 1)*N + n;
-                A_v(index) = A_factorial((c-1)*N + n - 1)/(ts(k)^(c - 1));
                 index = index + 1;
             end
             
-            % should equal to next segment start state:
-            A_i(index) = c_index;
-            A_j(index) = k*N + c;
-            A_v(index) = -A_factorial((c-1)*N + c - 1)/(ts(k + 1)^(c - 1));
+            % TODO -- should equal to next segment start state:
             index = index + 1;
             
             % move to next constraint:
@@ -305,49 +282,40 @@ function poly_coef = MinimumSnapCloseformSolver(waypoints, ts, K, t_order)
     start_cond = [waypoints(1), 0, 0, 0];
     end_cond =   [waypoints(end), 0, 0, 0];
     %#####################################################
-    % STEP 1: compute Q of p'Qp
+    % TODO -- STEP 1: compute Q of p'Qp
     %#####################################################
-    Q = getQ(K, t_order, ts);
 
     %#####################################################
-    % STEP 2: compute M
+    % TODO -- STEP 2: compute M
     %#####################################################
-    M = getM(K, t_order, ts);
     
     %#####################################################
-    % STEP 3: compute C
+    % TODO -- STEP 3: compute C
     %#####################################################
-    C = getC(K, t_order);
     
     %#####################################################
-    % STEP 4: solve unconstrained optimization
+    % TODO -- STEP 4: solve unconstrained optimization
     %#####################################################
-    T = M \ C;
-    Q = T' * Q * T;
     
-    % 4.1 set boundary waypoints (start & end) states
+    % TODO -- 4.1 set boundary waypoints (start & end) states
     D = 2*t_order + (K - 1);
     N = (K+1)*t_order;
     
     d_fixed = zeros(D, 1);
     for c = 1:t_order
-        d_fixed((c-1)*2 + 1) = start_cond(c);
-        d_fixed((c-1)*2 + 2) = end_cond(c);
+        ;
     end
-    % 4.2 set intermediate waypoint positions:
+    % TODO -- 4.2 set intermediate waypoint positions:
     for k = 2:K
-        d_fixed(2*t_order + k - 1) = waypoints(k);
+        ;
     end
     
-    % 4.3 solve least squared:
-    Q_ff = Q((D + 1):N, (D + 1):N);
-    Q_fd = Q((D + 1):N, 1:D);
-    d_free = -inv(Q_ff)*Q_fd*d_fixed;
+    % TODO -- 4.3 solve least squared:
 
     %#####################################################
-    % STEP 5: restore poly coef
+    % TODO -- STEP 5: restore poly coef
     %#####################################################
-    poly_coef = T * [d_fixed; d_free];
+
 end
 ```
 
@@ -398,21 +366,15 @@ function M = getM(K, t_order, ts)
     % calculate the start & end states of each trajectory segment:
     for k = 1:K
         for c = 1:t_order
-            % current segment start state:
-            M_i(index) = c_index;
-            M_j(index) = (k-1)*N + c;
-            M_v(index) = M_factorial((c-1)*N + c - 1)/(ts(k)^(c - 1));
+            % TODO -- current segment start state:
             index = index + 1;
             % move to next constraint:
             c_index = c_index + 1;
         end
         
         for c = 1:t_order
-            % current segment end state:
+            % TODO -- current segment end state:
             for n = c:N
-                M_i(index) = c_index;
-                M_j(index) = (k-1)*N + n;
-                M_v(index) = M_factorial((c-1)*N + n - 1)/(ts(k)^(c - 1));
                 index = index + 1;
             end
             % move to next constraint:
@@ -442,19 +404,13 @@ function C = getC(K, t_order)
     % 1. select fixed variables
     % ###############################################
     for c = 1:t_order
-        % first trajectory segment:
-        C_i(index) = c;
-        C_j(index) = c_index;
-        C_v(index) = 1.0;
+        % TODO -- first trajectory segment:
         index = index + 1;
         
         % move to next decision variable:
         c_index = c_index + 1;
         
-        % last trajectory segment:
-        C_i(index) = (K - 1)*(2*t_order) + t_order + c;
-        C_j(index) = c_index;
-        C_v(index) = 1.0;
+        % TODO -- last trajectory segment:
         index = index + 1;
         
         % move to next decision variable:
@@ -466,16 +422,10 @@ function C = getC(K, t_order)
     % ###############################################
     for c = 1:t_order
         for k = 1:(K - 1)
-            % current trajectory segment end state:
-            C_i(index) = (k - 1)*(2*t_order) + t_order + c;
-            C_j(index) = c_index;
-            C_v(index) = 1.0;
+            % TODO -- current trajectory segment end state:
             index = index + 1;
         
-            % should equal to next trajectory segment start state:
-            C_i(index) = k*(2*t_order) + c;
-            C_j(index) = c_index;
-            C_v(index) = 1.0;
+            % TODO -- should equal to next trajectory segment start state:
             index = index + 1;
         
             % move to next decision variable:
