@@ -10,7 +10,7 @@
 <arg name="start_y" default=" 0.0"/>
 <arg name="start_z" default=" 2.0"/>
 
-<arg name="sensing_horizon"  default=" 5.0"/>
+<arg name="sensing_horizon"  default=" 4.0"/>
 <arg name="sensing_rate"     default="30.0"/>
 <arg name="estimation_rate"  default="30.0"/>
 
@@ -26,9 +26,9 @@
   <param name="map/z_size"          value="$(arg map_size_z)" />
   <param name="map_frame_name"      value="$(arg map_frame_name)"/>
 
-  <param name="map/circle_num" value="0"/>        
-  <param name="map/obs_num"    value="150"/>        
-  <param name="map/resolution" value="0.1"/>     
+  <param name="map/circle_num" value="   0"/>        
+  <param name="map/obs_num"    value=" 500"/>        
+  <param name="map/resolution" value="0.10"/>     
 
   <param name="ObstacleShape/lower_rad"        value="0.1"/>
   <param name="ObstacleShape/upper_rad"        value="0.7"/>
@@ -62,19 +62,22 @@
   <remap from="~local_pointcloud" to="/pcl_render_node/local_pointcloud"/> 
   <remap from="~odom"             to="/visual_slam/odom"/>
 
-  <param name="planning/vel"                value="3.0"  />
-  <param name="planning/acc"                value="2.0"  />
-  <param name="planning/dev_order"          value="4"    />
-  <param name="planning/min_order"          value="3"    />
+  <param name="planning/vel"                value="2.0"  />
+  <param name="planning/acc"                value="1.5"  />
+
+  <param name="planning/min_order"          value="2"    />
+  <param name="planning/t_order"            value="3"    />
+  <param name="planning/c_order"            value="2"    />
+  
   <param name="vis/vis_traj_width"          value="0.07" />
   <param name="map/margin"                  value="0.0" />
   <param name="map/resolution"              value="0.2" />
   <param name="map/x_size"                  value="$(arg map_size_x)"/>
   <param name="map/y_size"                  value="$(arg map_size_y)"/>
   <param name="map/z_size"                  value="$(arg map_size_z)"/>
-  <param name="replanning/thresh_replan"    value="1.5" type="double"/>
-  <param name="replanning/thresh_no_replan" value="2.0" type="double"/>
-  <param name="path/resolution"             value="0.2"/>
+  <param name="replanning/thresh_replan"    value="2.5" type="double"/>
+  <param name="replanning/thresh_no_replan" value="2.5" type="double"/>
+  <param name="path/resolution"             value="0.20"/>
 </node>
 
 <!-- trajectory server -->

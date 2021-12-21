@@ -136,7 +136,8 @@ void RandomMapGenerate(bool ground_map_swt)
          is_kdtree_empty = true;
 
       // then, we put some pilar
-      for (int i = 0; i < _obs_num + 1; i++)
+      int obs_num{0};
+      while (obs_num < _obs_num)
       {
          double x, y, w, h;
          x = rand_x(eng);
@@ -178,6 +179,8 @@ void RandomMapGenerate(bool ground_map_swt)
                }
             }
          }
+
+         ++obs_num;
       }
       cloudMap.width = cloudMap.points.size();
       cloudMap.height = 1;
@@ -242,7 +245,7 @@ int main(int argc, char **argv)
    n.param("map/x_size", _x_size, 50.0);
    n.param("map/y_size", _y_size, 50.0);
    n.param("map/z_size", _z_size, 5.0);
-   n.param("map_frame_name", map_frame_name, std::string("map"));
+   n.param("map_frame_name", map_frame_name, std::string("world"));
 
    n.param("map/obs_num", _obs_num, 30);
    n.param("map/circle_num", _cir_num, 30);

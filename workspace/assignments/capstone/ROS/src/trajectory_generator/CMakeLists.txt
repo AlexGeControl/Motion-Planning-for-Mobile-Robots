@@ -1,17 +1,10 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.14)
+
 project(trajectory_generator)
 
-set(CMAKE_VERBOSE_MAKEFILE "false")
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-else()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
-endif()
+set(CMAKE_CXX_FLAGS    " ${CMAKE_CXX_FLAGS_INIT} -fPIC")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(ADDITIONAL_CXX_FLAG "-Wall -O3 -march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ADDITIONAL_CXX_FLAG}")
@@ -25,10 +18,30 @@ find_package(catkin REQUIRED COMPONENTS
   quadrotor_msgs
 )
 catkin_package()
+include(FetchContent)
 
-find_package(Eigen3 REQUIRED)
-find_package(PCL REQUIRED)
+# ABSL:
+if (NOT TARGET absl::strings OR NOT TARGET absl::status OR NOT TARGET absl::span)
+  message(STATUS "osqp-cpp: `absl` targets not found. Attempting to fetch contents...")
+  FetchContent_Declare(
+    abseil-cpp
+    GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
+    GIT_TAG        origin/master
+  )
+  FetchContent_MakeAvailable(abseil-cpp)
+else()
+  message(STATUS "osqp-cpp: `absl` targets found.")
+endif()
+
+# Eigen3:
+find_package (Eigen3 3.4 REQUIRED NO_MODULE)
 set(Eigen3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+
+# PCL:
+find_package(PCL REQUIRED)
+
+# OSQP:
+find_package (osqp REQUIRED)
 
 include_directories(
     include
@@ -39,13 +52,23 @@ include_directories(
     ${PCL_INCLUDE_DIRS} 
 )
 
-add_executable(trajectory_generator_node
-	src/trajectory_generator_node.cpp
-	src/trajectory_generator_waypoint.cpp
-  src/Astar_searcher.cpp
+add_library(osqp-cpp src/osqp++.cpp)
+target_link_libraries(
+  osqp-cpp 
+  PUBLIC absl::strings absl::status Eigen3::Eigen 
+  PRIVATE osqp::osqpstatic ${CMAKE_DL_LIBS}
 )
 
-target_link_libraries(trajectory_generator_node
-   ${catkin_LIBRARIES}
-   ${PCL_LIBRARIES}
+add_executable(trajectory_generator_node
+	src/trajectory_generator_node.cpp
+	src/trajectory_optimizer.cpp
+  src/path_finder.cpp
+)
+
+target_link_libraries(
+  trajectory_generator_node
+  
+  osqp-cpp
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
