@@ -63,7 +63,7 @@
   <remap from="~odom"                          to="/visual_slam/odom"/>
 
   <param name="planning/vel"                   value="1.0"  />
-  <param name="planning/acc"                   value="1.0"  />
+  <param name="planning/acc"                   value="0.5"  />
    
   <param name="planning/min_order"             value="2"    />
   <param name="planning/t_order"               value="3"    />
@@ -75,8 +75,8 @@
   <param name="map/x_size"                     value="$(arg map_size_x)"/>
   <param name="map/y_size"                     value="$(arg map_size_y)"/>
   <param name="map/z_size"                     value="$(arg map_size_z)"/>
-  <param name="replanning/thresh_replan"       value="2.0" type="double"/>
-  <param name="replanning/thresh_no_replan"    value="2.0" type="double"/>
+  <param name="replanning/thresh_replan"       value="1.5" type="double"/>
+  <param name="replanning/thresh_no_replan"    value="3.0" type="double"/>
   <param name="path/resolution"                value="0.20"/>
   <param name="collision_detection/resolution" value="0.05"/>
 </node>

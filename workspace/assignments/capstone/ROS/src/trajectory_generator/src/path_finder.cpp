@@ -355,10 +355,36 @@ std::vector<size_t> PathFinder::SimplifyPath(
 
   auto keyPointIndices = RDP::DoRDP(indices, waypoints, path_resolution);
 
+  // TODO: fix 2 waypoint bug in trajectory optimizer
   if (keyPointIndices.size() == 2) {
     keyPointIndices.push_back(*keyPointIndices.crbegin());
     keyPointIndices[1] = (keyPointIndices[0] + keyPointIndices[2]) >> 1;
   }
 
   return keyPointIndices;
+}
+
+std::vector<size_t> PathFinder::RefinePath(
+  const std::vector<size_t> &input, 
+  size_t segment_index
+) {
+  std::vector<size_t> output;
+
+  if (input[segment_index] != input[segment_index + 1]) {
+    output.insert(
+      output.end(),
+      input.cbegin(), input.cbegin() + segment_index + 1
+    );
+    output.push_back(
+      (input[segment_index] + input[segment_index + 1]) >> 1
+    );
+    output.insert(
+      output.end(),
+      input.cbegin() + segment_index + 1, input.cend()
+    );
+  } else {
+    output = input;
+  }
+
+  return output;
 }

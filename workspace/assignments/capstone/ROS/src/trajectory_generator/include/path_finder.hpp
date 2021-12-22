@@ -95,6 +95,19 @@ public:
 	);
 
 	/**
+	  * @brief refine waypoints for segment with collision
+	  *
+	  * @param[in] input raw waypoint indices
+	  * @param[in] segment_index first index of segment with collsion
+	  *
+	  * @return refined waypoint indices
+	  */
+	std::vector<size_t> RefinePath(
+		const std::vector<size_t> &input, 
+		size_t segment_index
+	);
+
+	/**
 	  * @brief detect collision on planned trajectory
 	  *
 	  * @param[in] coeffs polynomial coefficients of each trajectory segment

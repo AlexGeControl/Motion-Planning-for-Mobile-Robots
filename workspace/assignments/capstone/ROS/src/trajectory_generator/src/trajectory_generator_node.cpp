@@ -256,25 +256,10 @@ bool GenerateTrajectory() {
   do {
     // handle collision: add mid waypoint from A* in the hope that it could resolve collision
     if (unsafe_segment_index != PathFinder::NullIndex) {
-      const auto K = critical_waypoint_indices.size();
-      std::vector<size_t> updated_critical_waypoint_indices(K + 1);
-
-      updated_critical_waypoint_indices.insert(
-        updated_critical_waypoint_indices.end(),
-        critical_waypoint_indices.cbegin(), critical_waypoint_indices.cbegin() + unsafe_segment_index + 1
-      );
-      updated_critical_waypoint_indices.push_back(
-        (critical_waypoint_indices[unsafe_segment_index] + critical_waypoint_indices[unsafe_segment_index + 1]) >> 1
-      );
-      updated_critical_waypoint_indices.insert(
-        updated_critical_waypoint_indices.end(),
-        critical_waypoint_indices.cbegin() + unsafe_segment_index + 1, critical_waypoint_indices.cend()
-      );
-
-      critical_waypoint_indices = std::move(updated_critical_waypoint_indices);
+      // refine waypoints:
+      critical_waypoint_indices = _path_finder->RefinePath(critical_waypoint_indices, unsafe_segment_index);
 
       const auto N = critical_waypoint_indices.size();
-
       ROS_WARN(
           "[Refine]: from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f)", 
           source_pos(0), source_pos(1), source_pos(2),
@@ -307,10 +292,10 @@ bool GenerateTrajectory() {
     VisualizeTrajectory(_polyCoeff, _polyTime);
   
     // STEP 5: do collision detection:
-    // unsafe_segment_index = _path_finder->DetectCollision(
-    //   _polyCoeff, _polyTime, _time_resolution, 
-    //   &TrajectoryOptimizer::GetPos
-    // );
+    unsafe_segment_index = _path_finder->DetectCollision(
+      _polyCoeff, _polyTime, _time_resolution, 
+      &TrajectoryOptimizer::GetPos
+    );
   } while (unsafe_segment_index != PathFinder::NullIndex);
 
   //
