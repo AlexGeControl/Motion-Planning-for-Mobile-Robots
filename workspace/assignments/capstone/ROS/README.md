@@ -42,15 +42,9 @@ roslaunch trajectory_generator demo.launch
 
 ## Q1. Motion Planning Pipeline Workflow
 
-整个Pipeline由如下的**State Machine**进行管理:
+整个Pipeline由如下的**State Machine**进行管理 [Click Here to Interact](https://stately.ai/viz/embed/d9d2f910-858d-402e-8bc6-48ec8fc36efd?mode=viz&panel=code&showOriginalLink=1&readOnly=1&pan=1&zoom=1&controls=1):
 
-<iframe 
-height=850 
-width=90%
-src="https://stately.ai/viz/embed/d9d2f910-858d-402e-8bc6-48ec8fc36efd?mode=viz&panel=code&showOriginalLink=1&readOnly=1&pan=1&zoom=1&controls=1"
-allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-></iframe>
+<img src="doc/images/stm.gif" alt="Quadrotor Motion Planner STM" width="100%">
 
 其中Motion Planning核心算法流程如下:
 
@@ -61,4 +55,10 @@ sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-ori
    2. **Collision Check** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L291)
    3. **Mid-Waypoint Update for First Unsafe Segment** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L257)
    
+---
+
+## Q2. Algorithm Analysis
+
+To-Be Updated
+
 ---
