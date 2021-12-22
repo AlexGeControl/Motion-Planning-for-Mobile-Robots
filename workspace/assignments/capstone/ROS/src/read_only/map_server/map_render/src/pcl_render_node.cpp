@@ -18,7 +18,7 @@
 using namespace std;
 using namespace Eigen;
 
-ros::Publisher pub_cloud, global_map_vis_pub, global_ground_vis_pub;
+ros::Publisher pub_cloud, global_map_vis_pub, groud_vis_pub;
 
 sensor_msgs::PointCloud2 local_map_pcl;
 sensor_msgs::PointCloud2 local_depth_pcl;
@@ -29,7 +29,7 @@ ros::Subscriber global_map_sub, global_ground_sub;
 ros::Timer local_sensing_timer;
 
 bool has_global_map(false);
-bool has_global_ground(false);
+bool has_ground(false);
 bool has_local_map(false);
 bool has_odom(false);
 
@@ -81,14 +81,14 @@ vector<int> _pointIdxRadiusSearch;
 vector<float> _pointRadiusSquaredDistance;
 
 pcl::PointCloud<pcl::PointXYZ> cloud_input;
-void rcvGlobalPointCloudCallBack(const sensor_msgs::PointCloud2 &pointcloud_map)
+
+void ObstaclesCB(const sensor_msgs::PointCloud2 &pointcloud_map)
 {
     if (has_global_map)
         return;
 
     //transform map to point cloud format
     pcl::fromROSMsg(pointcloud_map, cloud_input);
-    has_global_map = has_global_ground && true;
     // for visualize only
     pcl::PointCloud<pcl::PointXYZ> cloud_vis;
     sensor_msgs::PointCloud2 map_vis;
@@ -114,35 +114,32 @@ void rcvGlobalPointCloudCallBack(const sensor_msgs::PointCloud2 &pointcloud_map)
 
     map_vis.header.frame_id = "/world";
     global_map_vis_pub.publish(map_vis);
+
+    has_global_map = has_ground && true;
 }
 
-void rcvGlobalGroundPointCloudCallBack(const sensor_msgs::PointCloud2 &pointcloud_map)
+void GroundCB(const sensor_msgs::PointCloud2 &pointcloud_map)
 {
-    if (has_global_ground)
+    if (has_ground)
         return;
 
-    ROS_WARN("Global Pointcloud received..");
-    //load global map
+    // load global map
     pcl::PointCloud<pcl::PointXYZ> cloudIn;
     pcl::PointXYZ pt_in;
-    //transform map to point cloud format
+    // transform map to point cloud format
     pcl::fromROSMsg(pointcloud_map, cloudIn);
     for (int i = 0; i < int(cloudIn.points.size()); i++)
     {
         pt_in = cloudIn.points[i];
         cloud_input.push_back(pt_in);
     }
-    printf("global map has points: %d.\n", (int)cloud_input.size());
-
-    has_global_ground = true;
+    ROS_WARN("[MapRenderer::GlobalGroundPointCloud] num. points %d.\n", (int)cloud_input.size());
 
     _voxel_sampler.setLeafSize(0.1f, 0.1f, 0.1f);
     _voxel_sampler.setInputCloud(cloud_input.makeShared());
     _voxel_sampler.filter(_cloud_all_map);
 
     _kdtreeLocalMap.setInputCloud(_cloud_all_map.makeShared());
-
-    has_global_map = has_global_ground && true;
 
     // for visualize only
     pcl::PointCloud<pcl::PointXYZ> cloud_vis;
@@ -168,7 +165,9 @@ void rcvGlobalGroundPointCloudCallBack(const sensor_msgs::PointCloud2 &pointclou
     pcl::toROSMsg(cloud_vis, map_vis);
 
     map_vis.header.frame_id = "/world";
-    global_ground_vis_pub.publish(map_vis);
+    groud_vis_pub.publish(map_vis);
+
+    has_ground = true;
 }
 
 void renderSensedPoints(const ros::TimerEvent &event)
@@ -241,15 +240,14 @@ int main(int argc, char **argv)
     nh.param("map/resolution", _resolution, 0.2);
 
     //subscribe point cloud
-    global_map_sub      = nh.subscribe("global_map", 1, rcvGlobalPointCloudCallBack);
-    global_ground_sub   = nh.subscribe("global_ground", 1, rcvGlobalGroundPointCloudCallBack);
-    odom_sub            = nh.subscribe("odometry", 50, rcvOdometryCallbck);
+    global_map_sub     = nh.subscribe("global_map", 1, ObstaclesCB);
+    global_ground_sub  = nh.subscribe("global_ground", 1, GroundCB);
+    odom_sub           = nh.subscribe("odometry", 50, rcvOdometryCallbck);
 
     //publisher
-    pub_cloud               = nh.advertise<sensor_msgs::PointCloud2>("local_pointcloud", 10);
-    //pub_vis_cloud           = nh.advertise<sensor_msgs::PointCloud2>("local_map_vis",1);
-    global_map_vis_pub      = nh.advertise<sensor_msgs::PointCloud2>("global_map_vis", 1);
-    global_ground_vis_pub   = nh.advertise<sensor_msgs::PointCloud2>("global_ground_vis", 1);
+    pub_cloud          = nh.advertise<sensor_msgs::PointCloud2>("local_pointcloud", 30);
+    global_map_vis_pub = nh.advertise<sensor_msgs::PointCloud2>("global_map_vis",    1);
+    groud_vis_pub      = nh.advertise<sensor_msgs::PointCloud2>("global_ground_vis", 1);
 
     double sensing_duration = 1.0 / sensing_rate * 2.5;
 

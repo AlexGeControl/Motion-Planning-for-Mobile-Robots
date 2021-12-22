@@ -47,7 +47,7 @@ ros::Subscriber _map_sub, _pts_sub, _odom_sub;
 ros::Publisher _traj_vis_pub, _traj_pub, _path_vis_pub;
 
 // for planning
-Vector3d odom_pos, odom_vel, start_pos, target_pos, start_vel;
+Vector3d odom_pos, odom_vel, source_pos, target_pos, start_vel;
 int _poly_num1D;
 MatrixXd _polyCoeff;
 VectorXd _polyTime;
@@ -126,7 +126,7 @@ void GoalCB(const nav_msgs::Path &msg) {
   const auto& goal_position = msg.poses[0].pose.position;
 
   if (goal_position.z >= 0.0) {
-      start_pos = odom_pos;
+      source_pos = odom_pos;
       start_vel = odom_vel;
 
       target_pos << goal_position.x, 
@@ -214,7 +214,7 @@ void STMCB(const ros::TimerEvent &e) {
         return;
       } else if ((target_pos - odom_pos).norm() < no_replan_thresh) {
         return;
-      } else if ((start_pos - odom_pos).norm() < replan_thresh) {
+      } else if ((source_pos - odom_pos).norm() < replan_thresh) {
         return;
       } else if (t_cur < t_replan) {
         return;
@@ -228,7 +228,7 @@ void STMCB(const ros::TimerEvent &e) {
       double t_cur = (time_now - time_traj_start).toSec();
       double t_delta = ros::Duration(0, 50).toSec();
       t_cur = t_delta + t_cur;
-      start_pos = getPos(t_cur);
+      source_pos = getPos(t_cur);
       start_vel = getVel(t_cur);
       bool success = GenerateTrajectory();
       if (success)
@@ -245,7 +245,7 @@ void STMCB(const ros::TimerEvent &e) {
 // back-end  : Minimum snap trajectory generation
 bool GenerateTrajectory() {
   // STEP 1: find path with A*
-  _path_finder->FindPath(start_pos, target_pos);
+  _path_finder->FindPath(source_pos, target_pos);
   auto waypoints = _path_finder->GetPath();
   _path_finder->resetUsedGrids();
 
@@ -272,11 +272,29 @@ bool GenerateTrajectory() {
       );
 
       critical_waypoint_indices = std::move(updated_critical_waypoint_indices);
+
+      const auto N = critical_waypoint_indices.size();
+
+      ROS_WARN(
+          "[Refine]: from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f)", 
+          source_pos(0), source_pos(1), source_pos(2),
+          target_pos(0), target_pos(1), target_pos(2)
+        );
+      for (size_t n = 0; n < N; ++n) {
+        ROS_WARN(
+          "\t(%.2f, %.2f, %.2f) @ %d", 
+          waypoints[critical_waypoint_indices[n]](0), 
+          waypoints[critical_waypoint_indices[n]](1),
+          waypoints[critical_waypoint_indices[n]](2),
+          critical_waypoint_indices[n]
+        );
+      }
     }
 
     // STEP 3: optimize trajectory with minimum-snap piecewise monomial trajectory
     const auto N = critical_waypoint_indices.size();
     Eigen::MatrixXd critical_waypoints = Eigen::MatrixXd::Zero(N, 3);
+
     for (size_t n = 0; n < N; ++n) {
       critical_waypoints.row(n) = waypoints[critical_waypoint_indices[n]];
     }
@@ -289,10 +307,10 @@ bool GenerateTrajectory() {
     VisualizeTrajectory(_polyCoeff, _polyTime);
   
     // STEP 5: do collision detection:
-    unsafe_segment_index = _path_finder->DetectCollision(
-      _polyCoeff, _polyTime, _time_resolution, 
-      &TrajectoryOptimizer::GetPos
-    );
+    // unsafe_segment_index = _path_finder->DetectCollision(
+    //   _polyCoeff, _polyTime, _time_resolution, 
+    //   &TrajectoryOptimizer::GetPos
+    // );
   } while (unsafe_segment_index != PathFinder::NullIndex);
 
   //
@@ -323,7 +341,7 @@ void OptimizeTrajectory(const Eigen::MatrixXd &waypoints) {
   _polyCoeff = _traj_optimizer->GenerateTrajectory(
     _t_order, _c_order, 
     waypoints, vel, acc, _polyTime,
-    TrajectoryOptimizer::Solver::Numeric
+    TrajectoryOptimizer::Solver::Analytic
   );
 }
 
@@ -504,12 +522,6 @@ void VisualizeTrajectory(
       }
 
       pos = _traj_optimizer->GetPos(polyCoeff, _poly_num1D, i, time(i));
-      ROS_WARN(
-        "\t[Seg. %d]: (%.2f, %.2f, %.2f) @ %.2f",
-        i,
-        pos(0), pos(1), pos(2),
-        time(i)
-      );
   }
 
   _traj_vis_pub.publish(_traj_vis);

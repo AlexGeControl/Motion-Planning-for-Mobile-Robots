@@ -56,7 +56,11 @@ private:
 		);
 	}
 
-	double getHeu(GridNodePtr node1, GridNodePtr node2);
+	double getHeu(
+		GridNodePtr sourcePtr, 
+		GridNodePtr targetPtr, 
+		GridNodePtr currPtr 
+	);
 	void AstarGetSucc(GridNodePtr currentPtr, std::vector<GridNodePtr> & neighborPtrSets, std::vector<double> & edgeCostSets);		
 
 	Eigen::Vector3d gridIndex2coord(const Eigen::Vector3i & index);

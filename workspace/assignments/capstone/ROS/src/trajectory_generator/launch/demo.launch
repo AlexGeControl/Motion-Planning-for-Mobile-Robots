@@ -4,14 +4,14 @@
 <arg name="map_frame_name" default="world"/>
 <arg name="map_size_x" default="30.0"/>
 <arg name="map_size_y" default="30.0"/>
-<arg name="map_size_z" default="4.0"/>
+<arg name="map_size_z" default=" 3.0"/>
 
 <arg name="start_x" default=" -15.0"/>
 <arg name="start_y" default=" 0.0"/>
 <arg name="start_z" default=" 2.0"/>
 
 <arg name="sensing_horizon"  default=" 4.0"/>
-<arg name="sensing_rate"     default="30.0"/>
+<arg name="sensing_rate"     default="10.0"/>
 <arg name="estimation_rate"  default="30.0"/>
 
 <!-- random map generation -->
@@ -26,8 +26,8 @@
   <param name="map/z_size"          value="$(arg map_size_z)" />
   <param name="map_frame_name"      value="$(arg map_frame_name)"/>
 
-  <param name="map/circle_num" value=" 125"/>        
-  <param name="map/obs_num"    value="   0"/>        
+  <param name="map/circle_num" value="   0"/>        
+  <param name="map/obs_num"    value=" 100"/>        
   <param name="map/resolution" value="0.10"/>     
 
   <param name="ObstacleShape/lower_rad"        value="0.1"/>
@@ -37,7 +37,7 @@
   <param name="CircleShape/lower_circle_rad"   value="0.6"/>        
   <param name="CircleShape/upper_circle_rad"   value="3.5"/>        
 
-  <param name="sensing/rate"   value="3.0"/>        
+  <param name="sensing/rate"   value="1.0"/>        
 </node>
 
 <!-- map server -->
@@ -62,8 +62,8 @@
   <remap from="~local_pointcloud"              to="/pcl_render_node/local_pointcloud"/> 
   <remap from="~odom"                          to="/visual_slam/odom"/>
 
-  <param name="planning/vel"                   value="2.0"  />
-  <param name="planning/acc"                   value="1.5"  />
+  <param name="planning/vel"                   value="1.0"  />
+  <param name="planning/acc"                   value="1.0"  />
    
   <param name="planning/min_order"             value="2"    />
   <param name="planning/t_order"               value="3"    />
@@ -75,10 +75,10 @@
   <param name="map/x_size"                     value="$(arg map_size_x)"/>
   <param name="map/y_size"                     value="$(arg map_size_y)"/>
   <param name="map/z_size"                     value="$(arg map_size_z)"/>
-  <param name="replanning/thresh_replan"       value="30.0" type="double"/>
-  <param name="replanning/thresh_no_replan"    value="30.0" type="double"/>
-  <param name="path/resolution"                value="0.10"/>
-  <param name="collision_detection/resolution" value="0.10"/>
+  <param name="replanning/thresh_replan"       value="2.0" type="double"/>
+  <param name="replanning/thresh_no_replan"    value="2.0" type="double"/>
+  <param name="path/resolution"                value="0.20"/>
+  <param name="collision_detection/resolution" value="0.05"/>
 </node>
 
 <!-- trajectory server -->

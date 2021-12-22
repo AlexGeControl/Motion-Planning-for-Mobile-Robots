@@ -237,7 +237,7 @@ int main(int argc, char **argv)
    ros::init(argc, argv, "random_complex_scene");
    ros::NodeHandle n("~");
 
-   _all_map_pub = n.advertise<sensor_msgs::PointCloud2>("global_map", 1);
+   _all_map_pub    = n.advertise<sensor_msgs::PointCloud2>("global_map",    1);
    _all_ground_pub = n.advertise<sensor_msgs::PointCloud2>("global_ground", 1);
    _odom_sub = n.subscribe("odometry", 50, rcvOdometryCallbck);
 
@@ -271,6 +271,7 @@ int main(int argc, char **argv)
 
    RandomMapGenerate(false);
    RandomMapGenerate(true);
+
    ros::Rate loop_rate(_sense_rate);
    bool ground_map_swt = true;
    while (ros::ok())

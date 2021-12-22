@@ -861,7 +861,7 @@ Eigen::MatrixXd TrajectoryOptimizer::DoTrajectoryGenerationAnalytically(
     Eigen::VectorXd outputLatent = Eigen::VectorXd::Zero(L);
     // 1.a boundary value equality constraints:
     outputLatent(0) = Pos(0);
-    outputLatent(1) = Pos(1);
+    outputLatent(1) = Pos(K);
     outputLatent(2) = Vel(0);
     outputLatent(3) = Vel(1);
     outputLatent(4) = Acc(0);

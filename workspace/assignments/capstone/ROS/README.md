@@ -44,15 +44,21 @@ roslaunch trajectory_generator demo.launch
 
 整个Pipeline由如下的**State Machine**进行管理:
 
-<img src="doc/images/demo.gif" alt="Quad Nav Demo" width="100%">
+<iframe 
+height=850 
+width=90%
+src="https://stately.ai/viz/embed/d9d2f910-858d-402e-8bc6-48ec8fc36efd?mode=viz&panel=code&showOriginalLink=1&readOnly=1&pan=1&zoom=1&controls=1"
+allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+></iframe>
 
 其中Motion Planning核心算法流程如下:
 
-1. **Path Finding with A Star** [Implementation Here]()
-2. **Simplify Path with RDF** [Implementation Here]()
+1. **Path Finding with A Star** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L247)
+2. **Simplify Path with RDF** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L252)
 3. **Trajectory Optimization with Collision Check**
-   1. **Trajectory Optimization through Minimum Jerk Piecewise Monomial** [Implementation Here]()
-   2. **Collision Check** [Implementation Here]()
-   3. **Mid-Waypoint Update for First Unsafe Segment** [Implementation Here]()
+   1. **Trajectory Optimization through Minimum Jerk Piecewise Monomial** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L277)
+   2. **Collision Check** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L291)
+   3. **Mid-Waypoint Update for First Unsafe Segment** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L257)
    
 ---

@@ -176,18 +176,18 @@ inline void PathFinder::AstarGetSucc(
   }
 }
 
-double PathFinder::getHeu(GridNodePtr node1, GridNodePtr node2) {
-  /*
-      STEP 1: finish the PathFinder::getHeu , which is the heuristic function 
-          a. choose possible heuristic function you want
-              Manhattan
-              Euclidean
-              Diagonal
-              or 0 (Dijkstra)
-          b. Remember tie_breaker learned in lecture, add it here ?
-  */
+double PathFinder::getHeu(
+  GridNodePtr sourcePtr, 
+  GridNodePtr targetPtr, 
+  GridNodePtr currPtr 
+) {
+  const auto dSrcTgt = (targetPtr->coord - sourcePtr->coord);
+  const auto dCurTgt = (targetPtr->coord - currPtr->coord);
 
-  return (node2->coord - node1->coord).norm();
+  const double distance = dCurTgt.norm();
+  const double deviation = dCurTgt.cross(dSrcTgt).norm() / dSrcTgt.norm();
+
+  return distance + 0.001 * deviation;
 }
 
 void PathFinder::FindPath(Vector3d start_pt, Vector3d end_pt) {
@@ -216,7 +216,7 @@ void PathFinder::FindPath(Vector3d start_pt, Vector3d end_pt) {
 
   //put start node in open set
   startPtr -> gScore = 0;
-  startPtr -> fScore = getHeu(startPtr, endPtr);   
+  startPtr -> fScore = getHeu(startPtr, endPtr, startPtr);   
   /*
       STEP 1: finish the PathFinder::getHeu , which is the heuristic function
   */
@@ -271,7 +271,7 @@ void PathFinder::FindPath(Vector3d start_pt, Vector3d end_pt) {
           neighborPtr = neighborPtrSets.at(i);
 
           auto gScore = currentCost + edgeCostSets.at(i);
-          auto fScore = gScore + getHeu(neighborPtr, endPtr);
+          auto fScore = gScore + getHeu(startPtr, endPtr, neighborPtr);
           // CASE 1: discover a new node, which is not in the closed set and open set
           if( 0 == neighborPtr-> id ){ 
               /*
@@ -353,5 +353,12 @@ std::vector<size_t> PathFinder::SimplifyPath(
     indices[i] = i;
   }
 
-  return RDP::DoRDP(indices, waypoints, path_resolution);
+  auto keyPointIndices = RDP::DoRDP(indices, waypoints, path_resolution);
+
+  if (keyPointIndices.size() == 2) {
+    keyPointIndices.push_back(*keyPointIndices.crbegin());
+    keyPointIndices[1] = (keyPointIndices[0] + keyPointIndices[2]) >> 1;
+  }
+
+  return keyPointIndices;
 }
