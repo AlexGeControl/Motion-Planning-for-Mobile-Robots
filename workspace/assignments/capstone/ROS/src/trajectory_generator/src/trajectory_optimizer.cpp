@@ -68,7 +68,7 @@ Eigen::Vector3d TrajectoryOptimizer::GetVel(const Eigen::MatrixXd &coeffs, const
     for ( int dim = 0; dim < 3; dim++ )
     {
         const Eigen::VectorXd &segmentCoeffs = (coeffs.row(k)).segment( dim * N, N );
-        vel(dim) = EvaluatePoly(segmentCoeffs, 1, t) + VelocityEpsilon;
+        vel(dim) = EvaluatePoly(segmentCoeffs, 1, t);
     }
 
     return vel; 

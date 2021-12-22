@@ -26,8 +26,8 @@
   <param name="map/z_size"          value="$(arg map_size_z)" />
   <param name="map_frame_name"      value="$(arg map_frame_name)"/>
 
-  <param name="map/circle_num" value="   0"/>        
-  <param name="map/obs_num"    value=" 500"/>        
+  <param name="map/circle_num" value=" 125"/>        
+  <param name="map/obs_num"    value="   0"/>        
   <param name="map/resolution" value="0.10"/>     
 
   <param name="ObstacleShape/lower_rad"        value="0.1"/>
@@ -58,26 +58,27 @@
 
 <!-- motion planning -->
 <node pkg="trajectory_generator" type="trajectory_generator_node" name="trajectory_generator_node" output="screen" required = "true">
-  <remap from="~waypoints"        to="/waypoint_generator/waypoints"/>
-  <remap from="~local_pointcloud" to="/pcl_render_node/local_pointcloud"/> 
-  <remap from="~odom"             to="/visual_slam/odom"/>
+  <remap from="~waypoints"                     to="/waypoint_generator/waypoints"/>
+  <remap from="~local_pointcloud"              to="/pcl_render_node/local_pointcloud"/> 
+  <remap from="~odom"                          to="/visual_slam/odom"/>
 
-  <param name="planning/vel"                value="2.0"  />
-  <param name="planning/acc"                value="1.5"  />
-
-  <param name="planning/min_order"          value="2"    />
-  <param name="planning/t_order"            value="3"    />
-  <param name="planning/c_order"            value="2"    />
-  
-  <param name="vis/vis_traj_width"          value="0.07" />
-  <param name="map/margin"                  value="0.0" />
-  <param name="map/resolution"              value="0.2" />
-  <param name="map/x_size"                  value="$(arg map_size_x)"/>
-  <param name="map/y_size"                  value="$(arg map_size_y)"/>
-  <param name="map/z_size"                  value="$(arg map_size_z)"/>
-  <param name="replanning/thresh_replan"    value="2.5" type="double"/>
-  <param name="replanning/thresh_no_replan" value="2.5" type="double"/>
-  <param name="path/resolution"             value="0.20"/>
+  <param name="planning/vel"                   value="2.0"  />
+  <param name="planning/acc"                   value="1.5"  />
+   
+  <param name="planning/min_order"             value="2"    />
+  <param name="planning/t_order"               value="3"    />
+  <param name="planning/c_order"               value="2"    />
+     
+  <param name="vis/vis_traj_width"             value="0.07" />
+  <param name="map/margin"                     value="0.0" />
+  <param name="map/resolution"                 value="0.2" />
+  <param name="map/x_size"                     value="$(arg map_size_x)"/>
+  <param name="map/y_size"                     value="$(arg map_size_y)"/>
+  <param name="map/z_size"                     value="$(arg map_size_z)"/>
+  <param name="replanning/thresh_replan"       value="30.0" type="double"/>
+  <param name="replanning/thresh_no_replan"    value="30.0" type="double"/>
+  <param name="path/resolution"                value="0.10"/>
+  <param name="collision_detection/resolution" value="0.10"/>
 </node>
 
 <!-- trajectory server -->

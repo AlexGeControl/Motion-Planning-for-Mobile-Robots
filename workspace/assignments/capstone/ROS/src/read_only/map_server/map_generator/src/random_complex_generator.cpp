@@ -67,8 +67,8 @@ void RandomMapGenerate(bool ground_map_swt)
       pcl::PointXYZ pt_random;
 
       // firstly, we put some circles
-      for (int i = 0; i < _cir_num; i++)
-      {
+      int cir_num{0};
+      while (cir_num < _cir_num) {
          double x0, y0, z0, R;
          std::vector<Vector3d> circle_set;
 
@@ -127,6 +127,8 @@ void RandomMapGenerate(bool ground_map_swt)
             if (pt_random.z >= 0.0)
                cloudMap.points.push_back(pt_random);
          }
+
+         ++cir_num;
       }
 
       bool is_kdtree_empty = false;

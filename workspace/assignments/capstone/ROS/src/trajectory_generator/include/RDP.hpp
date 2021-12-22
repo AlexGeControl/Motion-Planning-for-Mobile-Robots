@@ -38,15 +38,16 @@ const std::pair<int, double> FindMaxDistance(const std::vector<Eigen::Vector3d>&
 	return std::make_pair(index, distMax);
 }
 
-std::vector<Eigen::Vector3d> DoRDP(
-	const std::vector<Eigen::Vector3d>& points, 
+std::vector<size_t> DoRDP(
+	const std::vector<size_t> &indices,
+	const std::vector<Eigen::Vector3d> &points, 
 	const double epsilon
 ) {
-	std::vector<Eigen::Vector3d> result;
+	std::vector<size_t> result;
 
 	if (points.size() > 0u) {
 		if (points.size() == 1u) {
-			result.push_back(*points.cbegin());
+			result.push_back(indices[0]);
 		} else {
 			const auto maxDistance = FindMaxDistance(points);
 			
@@ -54,27 +55,24 @@ std::vector<Eigen::Vector3d> DoRDP(
 				const int index = maxDistance.first;
 
 				// first half:
-				std::vector<Eigen::Vector3d> firstHalf(points.cbegin(), points.cbegin() + index + 1);
+				std::vector<size_t> xIndices(indices.cbegin(), indices.cbegin() + index + 1);
+				std::vector<Eigen::Vector3d> xPoints(points.cbegin(), points.cbegin() + index + 1);
+
 				// second half:
-				std::vector<Eigen::Vector3d> secondHalf(points.cbegin() + index, points.cend()); 
+				std::vector<size_t> yIndices(indices.cbegin() + index, indices.cend());
+				std::vector<Eigen::Vector3d> yPoints(points.cbegin() + index, points.cend()); 
 				
-				const auto resultFirstHalf = DoRDP(firstHalf, epsilon);
-				const auto resultSecondHalf = DoRDP(secondHalf, epsilon);
+				const auto resultX = DoRDP(xIndices, xPoints, epsilon);
+				const auto resultY = DoRDP(yIndices, yPoints, epsilon);
 				
 				// get result:
-				result.insert(result.end(), resultFirstHalf.begin(), resultFirstHalf.end());
+				result.insert(result.end(), resultX.begin(), resultX.end());
 				result.pop_back();
-				result.insert(result.end(), resultSecondHalf.begin(), resultSecondHalf.end());
-
-				ROS_WARN(
-					"[RDP]: max. dist is %.2f, shrink from %d to %d", 
-					maxDistance.second, 
-					points.size(), result.size()
-				);
+				result.insert(result.end(), resultY.begin(), resultY.end());
 			}
 			else {
-				result.push_back(*points.cbegin());
-				result.push_back(*points.crbegin());
+				result.push_back(*indices.cbegin());
+				result.push_back(*indices.crbegin());
 			}
 		}
 	}

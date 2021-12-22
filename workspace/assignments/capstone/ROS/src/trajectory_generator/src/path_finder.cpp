@@ -118,30 +118,6 @@ Eigen::Vector3d PathFinder::coordRounding(const Eigen::Vector3d &coord) {
   return gridIndex2coord(coord2gridIndex(coord));
 }
 
-inline bool PathFinder::isOccupied(const Eigen::Vector3i &index) const {
-  return isOccupied(index(0), index(1), index(2));
-}
-
-inline bool PathFinder::isFree(const Eigen::Vector3i &index) const {
-  return isFree(index(0), index(1), index(2));
-}
-
-inline bool PathFinder::isOccupied(const int &idx_x, const int &idx_y,
-                                        const int &idx_z) const {
-  return (
-    idx_x >= 0 && idx_x < GLX_SIZE && idx_y >= 0 && idx_y < GLY_SIZE && idx_z >= 0 && idx_z < GLZ_SIZE &&
-    (data[idx_x * GLYZ_SIZE + idx_y * GLZ_SIZE + idx_z] == 1)
-  );
-}
-
-inline bool PathFinder::isFree(const int &idx_x, const int &idx_y,
-                                    const int &idx_z) const {
-  return (
-    idx_x >= 0 && idx_x < GLX_SIZE && idx_y >= 0 && idx_y < GLY_SIZE && idx_z >= 0 && idx_z < GLZ_SIZE &&
-    (data[idx_x * GLYZ_SIZE + idx_y * GLZ_SIZE + idx_z] < 1)
-  );
-}
-
 inline void PathFinder::AstarGetSucc(
   GridNodePtr currentPtr,
   vector<GridNodePtr> &neighborPtrSets,
@@ -368,40 +344,14 @@ vector<Vector3d> PathFinder::GetPath()
   return path;
 }
 
-vector<Vector3d> PathFinder::SimplifyPath(
-  const vector<Vector3d> &path,
+std::vector<size_t> PathFinder::SimplifyPath(
+  const std::vector<Eigen::Vector3d> &waypoints,
   double path_resolution
 ) {
-  return RDP::DoRDP(path, path_resolution);
-}
-
-Vector3d PathFinder::getPosPoly(MatrixXd polyCoeff, int k, double t) {
-  Vector3d ret;
-  int _poly_num1D = (int)polyCoeff.cols() / 3;
-  for (int dim = 0; dim < 3; dim++) {
-    VectorXd coeff = (polyCoeff.row(k)).segment(dim * _poly_num1D, _poly_num1D);
-    VectorXd time = VectorXd::Zero(_poly_num1D);
-
-    for (int j = 0; j < _poly_num1D; j++)
-      if (j == 0)
-        time(j) = 1.0;
-      else
-        time(j) = pow(t, j);
-
-    ret(dim) = coeff.dot(time);
-    // cout << "dim:" << dim << " coeff:" << coeff << endl;
+  std::vector<size_t> indices(waypoints.size());
+  for (size_t i = 0; i < waypoints.size(); ++i) {
+    indices[i] = i;
   }
 
-  return ret;
-}
-
-int PathFinder::safeCheck(MatrixXd polyCoeff, VectorXd time) {
-  int numUnsafeSegment = -1; //-1 -> the whole trajectory is safe
-  /**
-   *
-   * STEP 3.3:  finish the sareCheck()
-   *
-   * **/
-
-  return numUnsafeSegment;
+  return RDP::DoRDP(indices, waypoints, path_resolution);
 }

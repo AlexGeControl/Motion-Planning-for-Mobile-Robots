@@ -32,7 +32,7 @@ PathFinder *_path_finder = new PathFinder();
 
 // Set the obstacle map
 std::string _map_frame_name;
-double _resolution, _inv_resolution, _path_resolution;
+double _resolution, _inv_resolution, _path_resolution, _time_resolution;
 double _x_size, _y_size, _z_size;
 Vector3d _map_lower, _map_upper;
 int _max_x_id, _max_y_id, _max_z_id;
@@ -81,7 +81,7 @@ void OdometryCB(const nav_msgs::Odometry::ConstPtr &odom);
 void rcvWaypointsCallback(const nav_msgs::Path &wp);
 void PointCloudCB(const sensor_msgs::PointCloud2 &pointcloud_map);
 
-bool trajGeneration();
+bool GenerateTrajectory();
 
 Vector3d getPos(double t_cur);
 Vector3d getVel(double t_cur);
@@ -194,7 +194,7 @@ void STMCB(const ros::TimerEvent &e) {
     }
 
     case GEN_NEW_TRAJ: {
-      bool success = trajGeneration();
+      bool success = GenerateTrajectory();
       if (success)
         changeState(EXEC_TRAJ, "STATE");
       else
@@ -230,7 +230,7 @@ void STMCB(const ros::TimerEvent &e) {
       t_cur = t_delta + t_cur;
       start_pos = getPos(t_cur);
       start_vel = getVel(t_cur);
-      bool success = trajGeneration();
+      bool success = GenerateTrajectory();
       if (success)
         changeState(EXEC_TRAJ, "STATE");
       else
@@ -243,35 +243,66 @@ void STMCB(const ros::TimerEvent &e) {
 // trajectory generation: front-end + back-end
 // front-end : A* search method
 // back-end  : Minimum snap trajectory generation
-bool trajGeneration() {
+bool GenerateTrajectory() {
   // STEP 1: find path with A*
   _path_finder->FindPath(start_pos, target_pos);
-  auto grid_path = _path_finder->GetPath();
-  // reset map for next call
+  auto waypoints = _path_finder->GetPath();
   _path_finder->resetUsedGrids();
 
-  // STEP 2: simplify path with
-  grid_path = _path_finder->SimplifyPath(grid_path, _path_resolution);
-  Eigen::MatrixXd path(int(grid_path.size()), 3);
-  for (int k = 0; k < int(grid_path.size()); k++) {
-    path.row(k) = grid_path[k];
-    ROS_WARN(
-      "\t[RDP]: (%.2f, %.2f, %.2f) @ %d", 
-      path(k, 0), path(k, 1), path(k, 2),
-      k 
+  // STEP 2: simplify path with RDP:
+  auto critical_waypoint_indices = _path_finder->SimplifyPath(waypoints, _path_resolution);
+
+  int unsafe_segment_index{PathFinder::NullIndex};
+  do {
+    // handle collision: add mid waypoint from A* in the hope that it could resolve collision
+    if (unsafe_segment_index != PathFinder::NullIndex) {
+      const auto K = critical_waypoint_indices.size();
+      std::vector<size_t> updated_critical_waypoint_indices(K + 1);
+
+      updated_critical_waypoint_indices.insert(
+        updated_critical_waypoint_indices.end(),
+        critical_waypoint_indices.cbegin(), critical_waypoint_indices.cbegin() + unsafe_segment_index + 1
+      );
+      updated_critical_waypoint_indices.push_back(
+        (critical_waypoint_indices[unsafe_segment_index] + critical_waypoint_indices[unsafe_segment_index + 1]) >> 1
+      );
+      updated_critical_waypoint_indices.insert(
+        updated_critical_waypoint_indices.end(),
+        critical_waypoint_indices.cbegin() + unsafe_segment_index + 1, critical_waypoint_indices.cend()
+      );
+
+      critical_waypoint_indices = std::move(updated_critical_waypoint_indices);
+    }
+
+    // STEP 3: optimize trajectory with minimum-snap piecewise monomial trajectory
+    const auto N = critical_waypoint_indices.size();
+    Eigen::MatrixXd critical_waypoints = Eigen::MatrixXd::Zero(N, 3);
+    for (size_t n = 0; n < N; ++n) {
+      critical_waypoints.row(n) = waypoints[critical_waypoint_indices[n]];
+    }
+
+    OptimizeTrajectory(critical_waypoints);
+    time_duration = _polyTime.sum();
+
+    // STEP 4: visulize path and trajectory
+    VisualizeWaypoints(critical_waypoints);
+    VisualizeTrajectory(_polyCoeff, _polyTime);
+  
+    // STEP 5: do collision detection:
+    unsafe_segment_index = _path_finder->DetectCollision(
+      _polyCoeff, _polyTime, _time_resolution, 
+      &TrajectoryOptimizer::GetPos
     );
-  }
+  } while (unsafe_segment_index != PathFinder::NullIndex);
 
-  // STEP 3: optimize trajectory with minimum-snap piecewise monomial trajectory
-  OptimizeTrajectory(path);
-  time_duration = _polyTime.sum();
-
-  // STEP 4: publish the trajectory
+  //
+  // DONE: 
+  //
+  // publish the trajectory:
   PublishTrajectory(_polyCoeff, _polyTime);
-  // record the trajectory start time
+  // record the trajectory start time:
   time_traj_start = ros::Time::now();
-
-  // done:
+  // indicate state:
   if (_polyCoeff.rows() > 0)
     return true;
   else
@@ -294,25 +325,6 @@ void OptimizeTrajectory(const Eigen::MatrixXd &waypoints) {
     waypoints, vel, acc, _polyTime,
     TrajectoryOptimizer::Solver::Numeric
   );
-
-  // STEP 3.3: do collision detection:
-  const auto numUnsafeSegment = _path_finder->safeCheck(_polyCoeff, _polyTime);
-
-  const Eigen::MatrixXd repath = waypoints;
-  int count = 0;
-  while (numUnsafeSegment != -1) {
-    /**
-     *
-     * STEP 3.4:  reoptimize
-     * the method comes from: "Polynomial Trajectory
-     * Planning for Aggressive Quadrotor Flight in Dense Indoor Environment"
-     * part 3.5
-     *
-     * **/
-  }
-  // visulize path and trajectory
-  VisualizeWaypoints(repath);
-  VisualizeTrajectory(_polyCoeff, _polyTime);
 }
 
 void PublishTrajectory(
@@ -357,14 +369,14 @@ void PublishTrajectory(
 
   poly_number = traj_msg.num_order + 1;
   Eigen::VectorXd timeExponentials = Eigen::VectorXd::Ones(poly_number);
-  for (unsigned int i = 0; i < traj_msg.num_segment; i++) {
-    for (int n = 1; n < poly_number; ++n) {
+  for (size_t i = 0; i < traj_msg.num_segment; i++) {
+    for (size_t n = 1; n < poly_number; ++n) {
       timeExponentials(n) = time(i)*timeExponentials(n - 1);
     }
 
-    for (unsigned int j = 0; j < poly_number; j++) {
-      traj_msg.coef_x.push_back(polyCoeff(i, j)*timeExponentials(j));
-      traj_msg.coef_y.push_back(polyCoeff(i, poly_number + j)*timeExponentials(j));
+    for (size_t j = 0; j < poly_number; j++) {
+      traj_msg.coef_x.push_back(polyCoeff(i,                   j)*timeExponentials(j));
+      traj_msg.coef_y.push_back(polyCoeff(i,     poly_number + j)*timeExponentials(j));
       traj_msg.coef_z.push_back(polyCoeff(i, 2 * poly_number + j)*timeExponentials(j));
     }
     traj_msg.time.push_back(time(i));
@@ -551,6 +563,7 @@ int main(int argc, char **argv) {
   nh.param("map/y_size", _y_size, 50.0);
   nh.param("map/z_size", _z_size, 5.0);
   nh.param("path/resolution", _path_resolution, 0.05);
+  nh.param("collision_detection/resolution", _time_resolution, 0.05);
   nh.param("replanning/thresh_replan", replan_thresh, -1.0);
   nh.param("replanning/thresh_no_replan", no_replan_thresh, -1.0);
 
