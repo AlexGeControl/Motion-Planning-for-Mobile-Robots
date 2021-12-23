@@ -44,7 +44,7 @@ int _t_order, _c_order, _min_order;
 
 // ros related
 ros::Subscriber _map_sub, _pts_sub, _odom_sub;
-ros::Publisher _traj_vis_pub, _traj_pub, _path_vis_pub;
+ros::Publisher _raw_path_vis_pub, _refined_path_vis_pub, _traj_vis_pub, _traj_pub;
 
 // for planning
 Vector3d odom_pos, odom_vel, source_pos, target_pos, start_vel;
@@ -72,7 +72,10 @@ void STMCB(const ros::TimerEvent &e);
 void changeState(STATE new_state, string pos_call);
 void printState();
 
-void VisualizeWaypoints(const Eigen::MatrixXd &nodes);
+void VisualizeWaypoints(
+  const std::vector<Eigen::Vector3d> &waypoints,
+  const std::vector<size_t> &critical_waypoint_indices
+);
 void VisualizeTrajectory(const Eigen::MatrixXd &polyCoeff, const Eigen::VectorXd &time);
 void PublishTrajectory(const Eigen::MatrixXd &polyCoeff, const Eigen::VectorXd &time);
 
@@ -288,9 +291,9 @@ bool GenerateTrajectory() {
     time_duration = _polyTime.sum();
 
     // STEP 4: visulize path and trajectory
-    VisualizeWaypoints(critical_waypoints);
+    VisualizeWaypoints(waypoints, critical_waypoint_indices);
     VisualizeTrajectory(_polyCoeff, _polyTime);
-  
+
     // STEP 5: do collision detection:
     unsafe_segment_index = _path_finder->DetectCollision(
       _polyCoeff, _polyTime, _time_resolution, 
@@ -320,7 +323,10 @@ void OptimizeTrajectory(const Eigen::MatrixXd &waypoints) {
   vel.row(0) = start_vel;
 
   // STEP 3.1: allocate time to each trajectory segment
-  _polyTime = _traj_optimizer->AllocateTimes(waypoints, _Vel, _Acc);
+  _polyTime = _traj_optimizer->AllocateTimes(
+    waypoints, vel, acc, 
+    _Vel, _Acc
+  );
 
   // STEP 3.2: generate a minimum-jerk piecewise monomial trajectory
   _polyCoeff = _traj_optimizer->GenerateTrajectory(
@@ -335,8 +341,6 @@ void PublishTrajectory(
   const Eigen::VectorXd &time
 ) {
   if (polyCoeff.size() == 0 || time.size() == 0) {
-    ROS_WARN("[trajectory_generator_waypoint] empty trajectory, nothing to "
-             "publish.");
     return;
   }
 
@@ -353,18 +357,18 @@ void PublishTrajectory(
   traj_msg.trajectory_id = count;
   traj_msg.action = quadrotor_msgs::PolynomialTrajectory::ACTION_ADD;
 
-  traj_msg.num_order = 2 * _t_order - 1; // the order of polynomial
+  traj_msg.num_order = polyCoeff.cols()/3 - 1; // the order of polynomial
   traj_msg.num_segment = time.size();
 
   Vector3d initialVel, finalVel;
   initialVel = _traj_optimizer->GetVel(
     _polyCoeff, 
-    _poly_num1D, 0, 
+    0, 
     0.0
   );
   finalVel = _traj_optimizer->GetVel(
     _polyCoeff, 
-    _poly_num1D, traj_msg.num_segment - 1,
+    traj_msg.num_segment - 1,
     time(traj_msg.num_segment - 1)
   );
   traj_msg.start_yaw = atan2(initialVel(1), initialVel(0));
@@ -388,70 +392,117 @@ void PublishTrajectory(
   traj_msg.mag_coeff = 1;
 
   count++;
-  ROS_WARN("[traj..gen...node] traj_msg publish");
   _traj_pub.publish(traj_msg);
 }
 
-void VisualizeWaypoints(const Eigen::MatrixXd &path) {
-  visualization_msgs::Marker points, line_list;
+void VisualizeWaypoints(
+  const std::vector<Eigen::Vector3d> &waypoints,
+  const std::vector<size_t> &critical_waypoint_indices
+) {
+  visualization_msgs::Marker points, lines;
+
   int id = 0;
-  points.header.frame_id    = line_list.header.frame_id    = _map_frame_name;
-  points.header.stamp       = line_list.header.stamp       = ros::Time::now();
-  points.ns                 = line_list.ns                 = "trajectory_generator/trajectory";
-  points.action             = line_list.action             = visualization_msgs::Marker::ADD;
-  points.pose.orientation.w = line_list.pose.orientation.w = 1.0;
-  points.pose.orientation.x = line_list.pose.orientation.x = 0.0;
-  points.pose.orientation.y = line_list.pose.orientation.y = 0.0;
-  points.pose.orientation.z = line_list.pose.orientation.z = 0.0;
+  points.id                 = lines.id                 = id;
+  points.header.frame_id    = lines.header.frame_id    = _map_frame_name;
+  points.header.stamp       = lines.header.stamp       = ros::Time::now();
+  points.ns                 = lines.ns                 = "trajectory_generator/trajectory";
+  points.action             = lines.action             = visualization_msgs::Marker::ADD;
+  points.pose.orientation.w = lines.pose.orientation.w = 1.0;
+  points.pose.orientation.x = lines.pose.orientation.x = 0.0;
+  points.pose.orientation.y = lines.pose.orientation.y = 0.0;
+  points.pose.orientation.z = lines.pose.orientation.z = 0.0;
 
-  points.id    = id;
-  line_list.id = id;
+  points.type               = visualization_msgs::Marker::SPHERE_LIST;
+  points.scale.x            = 0.30;
+  points.scale.y            = 0.30;
+  points.scale.z            = 0.30;
+  points.color.a            = 1.00;
+  points.color.r            = 0.00;
+  points.color.g            = 0.00;
+  points.color.b            = 1.00;
 
-  points.type    = visualization_msgs::Marker::SPHERE_LIST;
-  line_list.type = visualization_msgs::Marker::LINE_STRIP;
+  points.points.clear();
+  for(size_t i = 0; i < waypoints.size(); ++i){
+    geometry_msgs::Point point;
 
-  points.scale.x = 0.3;
-  points.scale.y = 0.3;
-  points.scale.z = 0.3;
-  points.color.a = 1.0;
-  points.color.r = 0.0;
-  points.color.g = 0.0;
-  points.color.b = 0.0;
+    point.x = waypoints[i](0);
+    point.y = waypoints[i](1); 
+    point.z = waypoints[i](2); 
 
-  line_list.scale.x = 0.15;
-  line_list.scale.y = 0.15;
-  line_list.scale.z = 0.15;
-  line_list.color.a = 1.0;
-
-  
-  line_list.color.r = 0.0;
-  line_list.color.g = 1.0;
-  line_list.color.b = 0.0;
-  
-  line_list.points.clear();
-
-  for(int i = 0; i < path.rows(); i++){
-    geometry_msgs::Point p;
-    p.x = path(i, 0);
-    p.y = path(i, 1); 
-    p.z = path(i, 2); 
-
-    points.points.push_back(p);
-
-    if( i < (path.rows() - 1) )
-    {
-        geometry_msgs::Point p_line;
-        p_line = p;
-        line_list.points.push_back(p_line);
-        p_line.x = path(i+1, 0);
-        p_line.y = path(i+1, 1); 
-        p_line.z = path(i+1, 2);
-        line_list.points.push_back(p_line);
-    }
+    points.points.push_back(point);
   }
 
-  _path_vis_pub.publish(points);
-  _path_vis_pub.publish(line_list);
+  lines.type           = visualization_msgs::Marker::SPHERE_LIST;
+  lines.scale.x        = 0.15;
+  lines.scale.y        = 0.15;
+  lines.scale.z        = 0.15;
+  lines.color.a        = 1.00;
+  lines.color.r        = 0.00;
+  lines.color.g        = 0.00;
+  lines.color.b        = 1.00;
+
+  lines.points.clear();
+  for (size_t i = 0; i < waypoints.size() - 1; ++i)
+  {
+      geometry_msgs::Point point;
+
+      point.x = waypoints[i](0);
+      point.y = waypoints[i](1); 
+      point.z = waypoints[i](2); 
+      lines.points.push_back(point);
+
+      point.x = waypoints[i + 1](0);
+      point.y = waypoints[i + 1](1); 
+      point.z = waypoints[i + 1](2); 
+      lines.points.push_back(point);
+  }
+
+  _raw_path_vis_pub.publish(points);
+  _raw_path_vis_pub.publish(lines);
+
+  points.scale.x = 0.60;
+  points.scale.y = 0.60;
+  points.scale.z = 0.60;
+  points.color.a = 1.00;
+  points.color.r = 0.00;
+  points.color.g = 1.00;
+  points.color.b = 0.00;
+  points.points.clear();
+  for(size_t i = 0; i < critical_waypoint_indices.size(); ++i){
+    geometry_msgs::Point point;
+
+    point.x = waypoints[critical_waypoint_indices[i]](0);
+    point.y = waypoints[critical_waypoint_indices[i]](1); 
+    point.z = waypoints[critical_waypoint_indices[i]](2); 
+
+    points.points.push_back(point);
+  }
+
+  lines.scale.x = 0.30;
+  lines.scale.y = 0.30;
+  lines.scale.z = 0.30;
+  lines.color.a = 1.00;
+  lines.color.r = 0.00;
+  lines.color.g = 1.00;
+  lines.color.b = 0.00;
+  lines.points.clear();
+  for (size_t i = 0; i < critical_waypoint_indices.size() - 1; ++i)
+  {
+      geometry_msgs::Point point;
+
+      point.x = waypoints[critical_waypoint_indices[i]](0);
+      point.y = waypoints[critical_waypoint_indices[i]](1); 
+      point.z = waypoints[critical_waypoint_indices[i]](2); 
+      lines.points.push_back(point);
+
+      point.x = waypoints[critical_waypoint_indices[i + 1]](0);
+      point.y = waypoints[critical_waypoint_indices[i + 1]](1); 
+      point.z = waypoints[critical_waypoint_indices[i + 1]](2); 
+      lines.points.push_back(point);
+  }
+
+  _refined_path_vis_pub.publish(points);
+  _refined_path_vis_pub.publish(lines);
 }
 
 void VisualizeTrajectory(
@@ -494,7 +545,7 @@ void VisualizeTrajectory(
   {   
       for (double t = 0.0; t < time(i); t += 0.01, count += 1)
       {
-        pos = _traj_optimizer->GetPos(polyCoeff, _poly_num1D, i, t);
+        pos = _traj_optimizer->GetPos(polyCoeff, i, t);
         cur(0) = pt.x = pos(0);
         cur(1) = pt.y = pos(1);
         cur(2) = pt.z = pos(2);
@@ -506,7 +557,7 @@ void VisualizeTrajectory(
         pre = cur;
       }
 
-      pos = _traj_optimizer->GetPos(polyCoeff, _poly_num1D, i, time(i));
+      pos = _traj_optimizer->GetPos(polyCoeff, i, time(i));
   }
 
   _traj_vis_pub.publish(_traj_vis);
@@ -519,7 +570,7 @@ Vector3d getPos(double t_cur) {
     for (double t = 0.0; t < _polyTime(i); t += 0.01) {
       time = time + 0.01;
       if (time > t_cur) {
-        pos = _traj_optimizer->GetPos(_polyCoeff, _poly_num1D, i, t);
+        pos = _traj_optimizer->GetPos(_polyCoeff, i, t);
         return pos;
       }
     }
@@ -534,7 +585,7 @@ Vector3d getVel(double t_cur) {
     for (double t = 0.0; t < _polyTime(i); t += 0.01) {
       time = time + 0.01;
       if (time > t_cur) {
-        Vel = _traj_optimizer->GetVel(_polyCoeff, _poly_num1D, i, t);
+        Vel = _traj_optimizer->GetVel(_polyCoeff, i, t);
         return Vel;
       }
     }
@@ -577,9 +628,12 @@ int main(int argc, char **argv) {
   _map_sub = nh.subscribe("local_pointcloud", 1, PointCloudCB);
   _pts_sub = nh.subscribe("waypoints", 1, GoalCB);
 
-  _traj_pub = nh.advertise<quadrotor_msgs::PolynomialTrajectory>("trajectory", 50);
+  _raw_path_vis_pub = nh.advertise<visualization_msgs::Marker>("vis_raw_path", 1);
+  _refined_path_vis_pub = nh.advertise<visualization_msgs::Marker>("vis_refined_path", 1);
   _traj_vis_pub = nh.advertise<visualization_msgs::Marker>("vis_trajectory", 1);
-  _path_vis_pub = nh.advertise<visualization_msgs::Marker>("vis_path", 1);
+  _traj_pub = nh.advertise<quadrotor_msgs::PolynomialTrajectory>("trajectory", 50);
+  
+  
 
   // init obstacle map, the playground of quadrotor planner:
   _map_lower << -_x_size / 2.0, -_y_size / 2.0, 0.0;

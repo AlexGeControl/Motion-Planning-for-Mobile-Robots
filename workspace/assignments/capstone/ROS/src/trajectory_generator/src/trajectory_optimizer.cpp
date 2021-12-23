@@ -9,6 +9,8 @@
 #include <vector>
 #include <map>
 
+#include <unsupported/Eigen/Polynomials>
+
 TrajectoryOptimizer::TrajectoryOptimizer(){}
 TrajectoryOptimizer::~TrajectoryOptimizer(){}
 
@@ -40,7 +42,9 @@ double TrajectoryOptimizer::GetFactorial(const int N, const int D) {
   *
   * @return planned position
   */
-Eigen::Vector3d TrajectoryOptimizer::GetPos(const Eigen::MatrixXd &coeffs, const int N, const int k, const double t) {     
+Eigen::Vector3d TrajectoryOptimizer::GetPos(const Eigen::MatrixXd &coeffs, const int k, const double t) {     
+    const int N = coeffs.cols() / 3;
+
     Eigen::Vector3d pos;
 
     for ( int dim = 0; dim < 3; dim++ )
@@ -62,7 +66,9 @@ Eigen::Vector3d TrajectoryOptimizer::GetPos(const Eigen::MatrixXd &coeffs, const
   *
   * @return planned velocity
   */
-Eigen::Vector3d TrajectoryOptimizer::GetVel(const Eigen::MatrixXd &coeffs, const int N, const int k, const double t) { 
+Eigen::Vector3d TrajectoryOptimizer::GetVel(const Eigen::MatrixXd &coeffs, const int k, const double t) { 
+    const int N = coeffs.cols() / 3;
+
     Eigen::Vector3d vel;
 
     for ( int dim = 0; dim < 3; dim++ )
@@ -77,7 +83,7 @@ Eigen::Vector3d TrajectoryOptimizer::GetVel(const Eigen::MatrixXd &coeffs, const
 /**
 * @brief allocate traversal time for each trajectory segment
 *
-* @param[in] Path refined path from path finder, (K + 1)-by-3
+* @param[in] Pos refined path from path finder, (K + 1)-by-3
 * @param[in] velLimit max. velocity
 * @param[in] accLimit max. acceleration
 * @param[in] strategy time allocation strategy, default to GlobalTrapezoidal
@@ -85,24 +91,30 @@ Eigen::Vector3d TrajectoryOptimizer::GetVel(const Eigen::MatrixXd &coeffs, const
 * @return allocated traversal times for each trajectory segment, K-by-1
 */
 Eigen::VectorXd TrajectoryOptimizer::AllocateTimes(
-  const Eigen::MatrixXd &Path, 
+  const Eigen::MatrixXd &Pos, 
+  const Eigen::MatrixXd &Vel,
+  const Eigen::MatrixXd &Acc, 
   const double velLimit,
   const double accLimit,
   const TrajectoryOptimizer::TimeAllocation strategy
 ) {
-    const int K = (Path.rows() - 1);
+    const int K = (Pos.rows() - 1);
     
-    Eigen::VectorXd time = Eigen::VectorXd::Zero(K);
+    Eigen::VectorXd time = Eigen::VectorXd::Ones(K);
 
-    switch (strategy) {
-        case TrajectoryOptimizer::TimeAllocation::SegmentTrapezoidal:
-            return DoSegmentTrapezoidalTimesAllocation(Path, velLimit, accLimit);
-            break;
-        case TrajectoryOptimizer::TimeAllocation::GlobalTrapezoidal:
-            return DoGlobalTrapezoidalTimesAllocation(Path, velLimit, accLimit);
-            break;
-        default:
-            break;
+    if (K == 1) {
+        time = DoOBVPTimesAllocation(Pos, Vel, Acc);
+    } else {
+        switch (strategy) {
+            case TrajectoryOptimizer::TimeAllocation::SegmentTrapezoidal:
+                time = DoSegmentTrapezoidalTimesAllocation(Pos, velLimit, accLimit);
+                break;
+            case TrajectoryOptimizer::TimeAllocation::GlobalTrapezoidal:
+                time = DoGlobalTrapezoidalTimesAllocation(Pos, velLimit, accLimit);
+                break;
+            default:
+                break;
+        }
     }
 
     return time;
@@ -131,39 +143,47 @@ Eigen::MatrixXd TrajectoryOptimizer::GenerateTrajectory(
     const Eigen::VectorXd &Time,
     const TrajectoryOptimizer::Solver method
 ) {
-    const int N = GetNumCoeffs(cOrder);
-    const int K = Time.size(); 
-
-    // init:
-    Eigen::MatrixXd result = Eigen::MatrixXd::Zero(K, 3 * N);
-
     // tic:
     const auto tStart = std::chrono::high_resolution_clock::now();
 
-    for (int i = 0; i < Pos.cols(); ++i) {
-        switch (method) {
-            case TrajectoryOptimizer::Solver::Numeric:
-                result.block(0, i*N, K, N) = DoTrajectoryGenerationNumerically(
-                    tOrder,
-                    cOrder,
-                    Pos.col(i),
-                    Vel.col(i),
-                    Acc.col(i),
-                    Time
-                );
-                break;
-            case TrajectoryOptimizer::Solver::Analytic:
-                result.block(0, i*N, K, N) = DoTrajectoryGenerationAnalytically(
-                    tOrder,
-                    cOrder,
-                    Pos.col(i),
-                    Vel.col(i),
-                    Acc.col(i),
-                    Time
-                );
-                break;
-            default:
-                break;
+    const int K = Time.size();
+    Eigen::MatrixXd result;
+
+    if (K == 1) {
+        ROS_WARN("\t[TrajectoryOptimizer::GenerateTrajectory] OBVP");
+        result = DoOBVPTrajectoryGeneration(tOrder, Pos, Vel, Acc, Time);
+    } else {
+        ROS_WARN("\t[TrajectoryOptimizer::GenerateTrajectory] piecewise monomial minimum jerk");
+        const int N = GetNumCoeffs(cOrder);
+        
+        // init:
+        result = Eigen::MatrixXd::Zero(K, 3 * N);
+
+        for (int i = 0; i < Pos.cols(); ++i) {
+            switch (method) {
+                case TrajectoryOptimizer::Solver::Numeric:
+                    result.block(0, i*N, K, N) = DoTrajectoryGenerationNumerically(
+                        tOrder,
+                        cOrder,
+                        Pos.col(i),
+                        Vel.col(i),
+                        Acc.col(i),
+                        Time
+                    );
+                    break;
+                case TrajectoryOptimizer::Solver::Analytic:
+                    result.block(0, i*N, K, N) = DoTrajectoryGenerationAnalytically(
+                        tOrder,
+                        cOrder,
+                        Pos.col(i),
+                        Vel.col(i),
+                        Acc.col(i),
+                        Time
+                    );
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
@@ -208,12 +228,114 @@ double TrajectoryOptimizer::EvaluatePoly(const Eigen::VectorXd &coeffs, const in
     return result;
 }
 
+Eigen::VectorXd TrajectoryOptimizer::DoOBVPTimesAllocation(
+    const Eigen::MatrixXd &Pos,
+    const Eigen::MatrixXd &Vel,
+    const Eigen::MatrixXd &Acc
+) {
+    double optimal_cost{std::numeric_limits<double>::max()}; 
+    double optimal_time{DefaultTime};
+
+    // init:
+    const auto &pos_x_str = Pos(0, 0);
+    const auto &pos_y_str = Pos(0, 1);
+    const auto &pos_z_str = Pos(0, 2);
+
+    const auto pos_x_str_squared = pos_x_str * pos_x_str;
+    const auto pos_y_str_squared = pos_y_str * pos_y_str;
+    const auto pos_z_str_squared = pos_z_str * pos_z_str;
+
+    const auto &vel_x_str = Vel(0, 0);
+    const auto &vel_y_str = Vel(0, 1);
+    const auto &vel_z_str = Vel(0, 2);
+
+    const auto vel_x_str_squared = vel_x_str * vel_x_str;
+    const auto vel_y_str_squared = vel_y_str * vel_y_str;
+    const auto vel_z_str_squared = vel_z_str * vel_z_str;
+
+    const auto &pos_x_end = Pos(1, 0);
+    const auto &pos_y_end = Pos(1, 1);
+    const auto &pos_z_end = Pos(1, 2);
+
+    const auto pos_x_end_squared = pos_x_end * pos_x_end;
+    const auto pos_y_end_squared = pos_y_end * pos_y_end;
+    const auto pos_z_end_squared = pos_z_end * pos_z_end;
+
+    const auto &vel_x_end = Vel(1, 0);
+    const auto &vel_y_end = Vel(1, 1);
+    const auto &vel_z_end = Vel(1, 2);
+
+    const auto vel_x_end_squared = vel_x_end * vel_x_end;
+    const auto vel_y_end_squared = vel_y_end * vel_y_end;
+    const auto vel_z_end_squared = vel_z_end * vel_z_end;
+
+    // define cost function:
+    auto EvaluateCost = [&](const double T) {
+        auto result = (
+            T * (
+                T*(
+                    T + 
+                    (4*vel_x_end_squared + 4*vel_x_end*vel_x_str + 4*vel_x_str_squared + 4*vel_y_end_squared + 4*vel_y_end*vel_y_str + 4*vel_y_str_squared + 4*vel_z_end_squared + 4*vel_z_end*vel_z_str + 4*vel_z_str_squared)
+                ) + 
+                (-12*pos_x_end*vel_x_end - 12*pos_x_end*vel_x_str + 12*pos_x_str*vel_x_end + 12*pos_x_str*vel_x_str - 12*pos_y_end*vel_y_end - 12*pos_y_end*vel_y_str + 12*pos_y_str*vel_y_end + 12*pos_y_str*vel_y_str - 12*pos_z_end*vel_z_end - 12*pos_z_end*vel_z_str + 12*pos_z_str*vel_z_end + 12*pos_z_str*vel_z_str)
+            ) +  
+            (12*pos_x_end_squared - 24*pos_x_end*pos_x_str + 12*pos_x_str_squared + 12*pos_y_end_squared - 24*pos_y_end*pos_y_str + 12*pos_y_str_squared + 12*pos_z_end_squared - 24*pos_z_end*pos_z_str + 12*pos_z_str_squared)
+        );
+
+        return result / std::pow(T, 3);
+    };
+    
+    // identify where the derivative of cost function equals to 0:
+    Eigen::VectorXd coeffs(7);
+
+    coeffs << 0.0,
+           // 1st:
+              0.0,
+           // 2nd:
+              -36*pos_x_end_squared + 72*pos_x_end*pos_x_str - 36*pos_x_str_squared - 36*pos_y_end_squared + 72*pos_y_end*pos_y_str - 36*pos_y_str_squared - 36*pos_z_end_squared + 72*pos_z_end*pos_z_str - 36*pos_z_str_squared,
+           // 3rd:
+              24*pos_x_end*vel_x_end + 24*pos_x_end*vel_x_str - 24*pos_x_str*vel_x_end - 24*pos_x_str*vel_x_str + 24*pos_y_end*vel_y_end + 24*pos_y_end*vel_y_str - 24*pos_y_str*vel_y_end - 24*pos_y_str*vel_y_str + 24*pos_z_end*vel_z_end + 24*pos_z_end*vel_z_str - 24*pos_z_str*vel_z_end - 24*pos_z_str*vel_z_str,
+           // 4th:
+              -4*vel_x_end_squared - 4*vel_x_end*vel_x_str - 4*vel_x_str_squared - 4*vel_y_end_squared - 4*vel_y_end*vel_y_str - 4*vel_y_str_squared - 4*vel_z_end_squared - 4*vel_z_end*vel_z_str - 4*vel_z_str_squared,
+           // 5th:
+              0.0,
+           // 6th:
+              1.0;
+
+    Eigen::PolynomialSolver<double, Eigen::Dynamic> solver;
+    solver.compute(coeffs);
+
+    const Eigen::PolynomialSolver<double, Eigen::Dynamic>::RootsType &r = solver.roots();
+    
+    for (size_t i = 0; i < 6; ++i) {
+        if (
+            // positive real root only:
+            (r(i).real() > Epsilon) &&
+            (std::abs(r(i).imag()) < Epsilon)
+        ) {            
+            double curr_cost = EvaluateCost(r(i).real());
+
+            if (curr_cost < optimal_cost) {
+                optimal_cost = curr_cost;
+                optimal_time = r(i).real();
+            }
+        }
+        
+    }
+
+    // format output:
+    Eigen::VectorXd time = Eigen::VectorXd::Ones(1);
+    time(0) = optimal_time;
+
+    return time;
+}
+
 Eigen::VectorXd TrajectoryOptimizer::DoSegmentTrapezoidalTimesAllocation(
-  const Eigen::MatrixXd &Path,
+  const Eigen::MatrixXd &Pos,
   const double velLimit,
   const double accLimit
 ) { 
-    const int K = (Path.rows() - 1);
+    const int K = (Pos.rows() - 1);
     
     Eigen::VectorXd time = Eigen::VectorXd::Zero(K);
     
@@ -228,7 +350,7 @@ Eigen::VectorXd TrajectoryOptimizer::DoSegmentTrapezoidalTimesAllocation(
     Eigen::VectorXd segDisplacement = Eigen::VectorXd::Zero(K);
     for (int k = 1; k <= K; ++k) {
         // calculate segment displacement:
-        segDisplacement(k - 1) = (Path.row(k) - Path.row(k - 1)).norm();
+        segDisplacement(k - 1) = (Pos.row(k) - Pos.row(k - 1)).norm();
     }
 
     //
@@ -262,11 +384,11 @@ Eigen::VectorXd TrajectoryOptimizer::DoSegmentTrapezoidalTimesAllocation(
 }
 
 Eigen::VectorXd TrajectoryOptimizer::DoGlobalTrapezoidalTimesAllocation(
-  const Eigen::MatrixXd &Path,
+  const Eigen::MatrixXd &Pos,
   const double velLimit,
   const double accLimit
 ) {
-    const int K = (Path.rows() - 1);
+    const int K = (Pos.rows() - 1);
     
     Eigen::VectorXd time = Eigen::VectorXd::Zero(K);
     
@@ -282,7 +404,7 @@ Eigen::VectorXd TrajectoryOptimizer::DoGlobalTrapezoidalTimesAllocation(
     Eigen::VectorXd segDisplacement = Eigen::VectorXd::Zero(K);
     for (int k = 1; k <= K; ++k) {
         // calculate segment displacement:
-        segDisplacement(k - 1) = (Path.row(k) - Path.row(k - 1)).norm();
+        segDisplacement(k - 1) = (Pos.row(k) - Pos.row(k - 1)).norm();
         // update accumulated displacement:
         totalDisplacement += segDisplacement(k - 1);
     }
@@ -354,19 +476,48 @@ Eigen::VectorXd TrajectoryOptimizer::DoGlobalTrapezoidalTimesAllocation(
     return time;    
 }
 
-/**
- * @brief generate minimum snap trajectory through numeric method with OSQP C++
- *
- * @param[in] tOrder the L2-norm of [tOrder]th derivative of the target trajectory will be used as objective function
- * @param[in] cOrder continuity constraints, the target trajectory should be [cOrder]th continuous at intermediate waypoints
- * @param[in] Pos equality constraints, the target trajectory should pass all the waypoints, (K + 1)-by-1
- * @param[in] Vel equality constraints, boundary(start & goal) velocity specifications, 2-by-1
- * @param[in] Acc equality constraints, boundary(start & goal) acceleration specifications, 2-by-1
- * @param[in] Time pre-computed time allocations, K-by-1
- *
- * @return polynomial coeffs of generated trajectory, K-by-N
- * @note the pre-assumption is no allocated segment time in Time is 0
- */
+Eigen::MatrixXd TrajectoryOptimizer::DoOBVPTrajectoryGeneration(
+    const int tOrder,
+    const Eigen::MatrixXd &Pos,
+    const Eigen::MatrixXd &Vel,
+    const Eigen::MatrixXd &Acc,
+    const Eigen::VectorXd &Time
+) {
+    // parse time:
+    const auto T = Time(0);
+
+    // build transformation matrix for alpha & beta:
+    Eigen::MatrixXd A = Eigen::MatrixXd::Zero(6, 6);
+    A.block(0, 0, 3, 3) = (-2.0/std::pow(T, 3))*Eigen::MatrixXd::Identity(3, 3);
+    A.block(0, 3, 3, 3) = (+1.0/std::pow(T, 2))*Eigen::MatrixXd::Identity(3, 3);
+    A.block(3, 0, 3, 3) = (+3.0/std::pow(T, 2))*Eigen::MatrixXd::Identity(3, 3);
+    A.block(3, 3, 3, 3) = (-1.0/std::pow(T, 1))*Eigen::MatrixXd::Identity(3, 3);
+
+    Eigen::VectorXd b = Eigen::VectorXd::Zero(6);
+    b << Pos(1, 0) - Pos(0, 0) - Vel(0, 0) * T,
+         Pos(1, 1) - Pos(0, 1) - Vel(0, 1) * T,
+         Pos(1, 2) - Pos(0, 2) - Vel(0, 2) * T,
+         Vel(1, 0) - Vel(0, 0),
+         Vel(1, 1) - Vel(0, 1),
+         Vel(1, 2) - Vel(0, 2);
+    
+    // get alpha & beta:
+    const auto alpha_beta = A*b;
+
+    // build coefficients:
+    Eigen::MatrixXd result = Eigen::MatrixXd::Zero(1, 12);
+
+    for (int dim = 0; dim < 3; ++dim) {
+        result(0, 4*dim + 0) = Pos(0, dim);
+        result(0, 4*dim + 1) = Vel(0, dim);
+        result(0, 4*dim + 2) = alpha_beta(dim + 3);
+        result(0, 4*dim + 3) = alpha_beta(dim + 0);
+    }
+
+    // done:
+    return result;
+}
+
 Eigen::MatrixXd TrajectoryOptimizer::DoTrajectoryGenerationNumerically(
     const int tOrder,       
     const int cOrder,    
@@ -625,19 +776,6 @@ Eigen::MatrixXd TrajectoryOptimizer::DoTrajectoryGenerationNumerically(
     return result;
 }
 
-/**
- * @brief generate minimum snap trajectory through analytic method with Eigen C++
- *
- * @param[in] tOrder the L2-norm of [tOrder]th derivative of the target trajectory will be used as objective function
- * @param[in] cOrder continuity constraints, the target trajectory should be [cOrder]th continuous at intermediate waypoints
- * @param[in] Pos equality constraints, the target trajectory should pass all the waypoints, (K + 1)-by-1
- * @param[in] Vel equality constraints, boundary(start & goal) velocity specifications, 2-by-1
- * @param[in] Acc equality constraints, boundary(start & goal) acceleration specifications, 2-by-1
- * @param[in] Time pre-computed time allocations, K-by-1
- *
- * @return polynomial coeffs of generated trajectory, K-by-N
- * @note the pre-assumption is no allocated segment time in Time is 0
- */
 Eigen::MatrixXd TrajectoryOptimizer::DoTrajectoryGenerationAnalytically(
     const int tOrder,       
     const int cOrder,    

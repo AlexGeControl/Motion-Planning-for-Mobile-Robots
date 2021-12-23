@@ -10,7 +10,8 @@ public:
 
   ~TrajectoryOptimizer();
 
-  static constexpr double VelocityEpsilon{1e-5};
+  static constexpr double DefaultTime{1.0};
+  static constexpr double Epsilon{1e-5};
 
   /**
    * @brief get minimum num. of polynomial coeffs to satisfy [cOrder]th continuous constraints
@@ -41,7 +42,7 @@ public:
    *
    * @return planned position
    */
-  static Eigen::Vector3d GetPos(const Eigen::MatrixXd &coeffs, const int N, const int k, const double t);
+  static Eigen::Vector3d GetPos(const Eigen::MatrixXd &coeffs, const int k, const double t);
 
   /**
    * @brief evaluate planned velocity at time t
@@ -53,7 +54,7 @@ public:
    *
    * @return planned velocity
    */
-  static Eigen::Vector3d GetVel(const Eigen::MatrixXd &coeffs, const int N, const int k, const double t);
+  static Eigen::Vector3d GetVel(const Eigen::MatrixXd &coeffs, const int k, const double t);
 
   enum class TimeAllocation {
     SegmentTrapezoidal,
@@ -63,7 +64,9 @@ public:
   /**
    * @brief allocate traversal time for each trajectory segment
    *
-   * @param[in] Path refined path from path finder, (K + 1)-by-3
+   * @param[in] Pos refined path from path finder, (K + 1)-by-3
+   * @param[in] Vel boundary(start & goal) velocity specifications, 2-by-1
+   * @param[in] Acc boundary(start & goal) acceleration specifications, 2-by-1
    * @param[in] velLimit max. velocity
    * @param[in] accLimit max. acceleration
    * @param[in] strategy time allocation strategy, default to GlobalTrapezoidal
@@ -71,7 +74,9 @@ public:
    * @return allocated traversal times for each trajectory segment, K-by-1
    */
   static Eigen::VectorXd AllocateTimes(
-    const Eigen::MatrixXd &Path, 
+    const Eigen::MatrixXd &Pos,
+    const Eigen::MatrixXd &Vel,
+    const Eigen::MatrixXd &Acc, 
     const double velLimit,
     const double accLimit,
     const TimeAllocation strategy = TimeAllocation::GlobalTrapezoidal
@@ -119,16 +124,31 @@ private:
   static double EvaluatePoly(const Eigen::VectorXd &coeffs, const int d, const double t);
 
   /**
+   * @brief allocate traversal time for single trajectory segment with OBVP
+   *
+   * @param[in] Pos refined path from path finder, 2-by-3
+   * @param[in] Vel boundary(start & goal) velocity specifications, 2-by-1
+   * @param[in] Acc boundary(start & goal) acceleration specifications, 2-by-1
+   * 
+   * @return allocated traversal times for each trajectory segment, 1-by-1
+   */
+  static Eigen::VectorXd DoOBVPTimesAllocation(
+    const Eigen::MatrixXd &Pos,
+    const Eigen::MatrixXd &Vel,
+    const Eigen::MatrixXd &Acc
+  );
+
+  /**
    * @brief allocate traversal time for each trajectory segment with segment-wise trapezoidal heuristics
    *
-   * @param[in] Path refined path from path finder, (K + 1)-by-3
+   * @param[in] Pos refined path from path finder, (K + 1)-by-3
    * @param[in] velLimit max. velocity
    * @param[in] accLimit max. acceleration
    *
    * @return allocated traversal times for each trajectory segment, K-by-1
    */
   static Eigen::VectorXd DoSegmentTrapezoidalTimesAllocation(
-    const Eigen::MatrixXd &Path,
+    const Eigen::MatrixXd &Pos,
     const double velLimit,
     const double accLimit
   );
@@ -136,16 +156,36 @@ private:
   /**
    * @brief allocate traversal time for each trajectory segment with global trapezoidal heuristics
    *
-   * @param[in] Path refined path from path finder, (K + 1)-by-3
+   * @param[in] Pos refined path from path finder, (K + 1)-by-3
    * @param[in] velLimit max. velocity
    * @param[in] accLimit max. acceleration
    *
    * @return allocated traversal times for each trajectory segment, K-by-1
    */
   static Eigen::VectorXd DoGlobalTrapezoidalTimesAllocation(
-    const Eigen::MatrixXd &Path,
+    const Eigen::MatrixXd &Pos,
     const double velLimit,
     const double accLimit
+  );
+
+  /**
+   * @brief generate minimum snap trajectory through numeric method with OSQP C++
+   *
+   * @param[in] tOrder the L2-norm of [tOrder]th derivative of the target trajectory will be used as objective function
+   * @param[in] Pos boundary(start & goal) position specifications, 2-by-3
+   * @param[in] Vel boundary(start & goal) velocity specifications, 2-by-3
+   * @param[in] Acc boundary(start & goal) acceleration specifications, 2-by-3
+   * @param[in] Time pre-computed time allocations, 1-by-1
+   *
+   * @return polynomial coeffs of generated trajectory, 1-by-N
+   * @note the pre-assumption is no allocated segment time in Time is 0
+   */
+  static Eigen::MatrixXd DoOBVPTrajectoryGeneration(
+    const int tOrder,
+    const Eigen::MatrixXd &Pos,
+    const Eigen::MatrixXd &Vel,
+    const Eigen::MatrixXd &Acc,
+    const Eigen::VectorXd &Time
   );
 
   /**

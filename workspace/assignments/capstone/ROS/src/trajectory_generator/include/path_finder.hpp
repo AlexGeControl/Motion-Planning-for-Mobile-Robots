@@ -124,11 +124,10 @@ public:
 		FuncGetPos GetPos
 	) {
 		const size_t K = time.size();
-		const size_t N = polyCoeff.cols() / 3;
 
 		for (size_t k = 0; k < K; ++k) {
 			for (double t = 0.0; t <= time(k); t += timeResolution) {
-				const Eigen::Vector3d pos = GetPos(polyCoeff, N, k, t);
+				const Eigen::Vector3d pos = GetPos(polyCoeff, k, t);
 				const Eigen::Vector3i idx = coord2gridIndex(pos);
 
 				const int idxX = idx(0);

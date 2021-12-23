@@ -51,14 +51,22 @@ roslaunch trajectory_generator demo.launch
 1. **Path Finding with A Star** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L247)
 2. **Simplify Path with RDF** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L252)
 3. **Trajectory Optimization with Collision Check**
-   1. **Trajectory Optimization through Minimum Jerk Piecewise Monomial** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L277)
+   1. **Trajectory Optimization** 
+      1. **OBVP, K = 1**[Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_optimizer.cpp#L153)
+      2. **Piecewise Minimum Jerk, K > 2**[Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_optimizer.cpp#L156)
    2. **Collision Check** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L291)
    3. **Mid-Waypoint Update for First Unsafe Segment** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L257)
    
 ---
 
-## Q2. Algorithm Analysis
+## Q2. Trajectory Evolution
 
-To-Be Updated
+The legends are defined as follows:
+
+* **RED** Optimized Trajectory, from either **OBVP** or **Piecewise Minimum Jerk**
+* **RED** Simplified Path, from either **RDP**
+* **BLUE** Raw Path, from either **A Star**
+
+<img src="doc/images/raw-refined-optimized.gif" alt="Raw, Refined and Optimized" width="100%">
 
 ---
