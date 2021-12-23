@@ -63,9 +63,9 @@ roslaunch trajectory_generator demo.launch
 
 The legends are defined as follows:
 
-* **RED** Optimized Trajectory, from either **OBVP** or **Piecewise Minimum Jerk**
-* **RED** Simplified Path, from either **RDP**
 * **BLUE** Raw Path, from either **A Star**
+* **GREEN** Simplified Path, from either **RDP**
+* **RED** Optimized Trajectory, from either **OBVP** or **Piecewise Minimum Jerk**
 
 <img src="doc/images/raw-refined-optimized.gif" alt="Raw, Refined and Optimized" width="100%">
 
