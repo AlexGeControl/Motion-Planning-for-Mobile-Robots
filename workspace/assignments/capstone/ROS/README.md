@@ -48,14 +48,14 @@ roslaunch trajectory_generator demo.launch
 
 其中Motion Planning核心算法流程如下:
 
-1. **Path Finding with A Star** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L247)
-2. **Simplify Path with RDF** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L252)
-3. **Trajectory Optimization with Collision Check**
+1. **Path Finding with A Star** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1586a98e86387e72de01cc1bed357da8ee648e08/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L250)
+2. **Simplify Path with RDF** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1586a98e86387e72de01cc1bed357da8ee648e08/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L255)
+3. **Trajectory Optimization with Collision Check** [Interface Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1586a98e86387e72de01cc1bed357da8ee648e08/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L290)
    1. **Trajectory Optimization** 
-      1. **OBVP, K = 1**[Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_optimizer.cpp#L153)
-      2. **Piecewise Minimum Jerk, K > 2**[Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_optimizer.cpp#L156)
-   2. **Collision Check** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L291)
-   3. **Mid-Waypoint Update for First Unsafe Segment** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/17baa2cb8bab17b342798fa659ae4e77b02a47c7/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L257)
+      1. **OBVP, K = 1**[Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1586a98e86387e72de01cc1bed357da8ee648e08/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_optimizer.cpp#L154)
+      2. **Piecewise Minimum Jerk, K >= 2**[Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1586a98e86387e72de01cc1bed357da8ee648e08/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_optimizer.cpp#L157)
+   2. **Collision Check** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1586a98e86387e72de01cc1bed357da8ee648e08/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L298)
+   3. **Mid-Waypoint Update for First Unsafe Segment** [Implementation Here](https://github.com/AlexGeControl/Motion-Planning-for-Mobile-Robots/blob/1586a98e86387e72de01cc1bed357da8ee648e08/workspace/assignments/capstone/ROS/src/trajectory_generator/src/trajectory_generator_node.cpp#L263)
    
 ---
 
