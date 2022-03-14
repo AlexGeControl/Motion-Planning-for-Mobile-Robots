@@ -51,8 +51,9 @@
 ```bash
 # login to my Alibaba Cloud registry -- default password -- shenlansf20210122:
 docker login --username=937570601@qq.com registry.cn-shanghai.aliyuncs.com
-# download images:
-docker pull registry.cn-shanghai.aliyuncs.com/shenlanxueyuan/motion-planning-for-mobile-robots
+# download images, ubuntu 18.04 + ROS melodic + vnc
+docker pull registry.cn-shanghai.aliyuncs.com/shenlanxueyuan/motion-planning-for-mobile-robots:bionic-cpu-vnc
+# TODO: enable ROS noetic
 ```
 
 ---
