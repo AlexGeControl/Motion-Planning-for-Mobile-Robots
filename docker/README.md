@@ -1,6 +1,6 @@
 # Docker Environment for Motion Planning for Mobile Robots
 
-基于Docker的[移动机器人运动规划/Motion Planning for Mobile Robotics](https://www.shenlanxueyuan.com/course/398)学习环境.
+基于Docker的[移动机器人运动规划/Motion Planning for Mobile Robotics](https://www.shenlanxueyuan.com/course/450)学习环境.
 
 ---
 
@@ -22,7 +22,7 @@
 
 安装完成后, 还需要进行`如下操作`, 以保证环境的易用性:
 
-#### 将当前用户加入Docker Group
+### (请务必执行此操作)将当前用户加入Docker Group
 
 为了能在非`sudo`模式下使用`Docker`, 需要将当前用户加入`Docker Group`.
 
@@ -49,10 +49,10 @@
 在安装完成`Docker`以及`Docker-Compose`之后，需要从`阿里云`源上获得所需镜像.
 
 ```bash
-# login to Sensor Fusion registry -- default password -- shenlansf20210122:
+# login to my Alibaba Cloud registry -- default password -- shenlansf20210122:
 docker login --username=937570601@qq.com registry.cn-shanghai.aliyuncs.com
 # download images:
-docker pull registry.cn-shanghai.aliyuncs.com/shenlanxueyuan/sensor-fusion-workspace:bionic-cpu-vnc
+docker pull registry.cn-shanghai.aliyuncs.com/shenlanxueyuan/motion-planning-for-mobile-robots
 ```
 
 ---
@@ -65,7 +65,7 @@ docker pull registry.cn-shanghai.aliyuncs.com/shenlanxueyuan/sensor-fusion-works
 docker-compose down && docker-compose up
 ```
 
-成功启动后, 命令行输出如下:
+成功启动后, 命令行输出如下 **请不要过度在意此处的日志输出，除非你很清楚容器里到底在执行什么，请直接进行下一节的Service Health Check**:
 
 <img src="doc/01-launch-instance.png" width="100%" alt="Launch Workspace"/>
 
@@ -73,7 +73,7 @@ docker-compose down && docker-compose up
 
 ### Service Health Check
 
-然后打开`Chrome`浏览器, 访问URL`http://localhost:49001/`, 默认账号/密码为`sensorfusion/sensorfusion`, 确保所有服务成功启动. 
+然后打开`Chrome`浏览器, 访问URL`http://localhost:49001/`, 默认账号/密码为`motionplanning/motionplanning`, 确保所有服务成功启动. 
 
 若所有服务成功启动, 系统状态如下图所示:
 
@@ -83,7 +83,7 @@ docker-compose down && docker-compose up
 
 ### 访问工作空间
 
-接着在`Chrome`浏览器中, 访问URL`http://localhost:40080/`, 默认登录密码为`sensorfusion`, 访问Docker Workspace
+接着在`Chrome`浏览器中, 访问URL`http://localhost:40080/`, 默认登录密码为`motionplanning`, 访问Docker Workspace
 
 <img src="doc/03-access-workspace.png" width="100%" alt="Access Workspace"/>
 

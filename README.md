@@ -8,7 +8,7 @@ Designed & Implemented by **Ge Yao**, alexgecontrol@qq.com
 
 ## Overview
 
-本Repo为基于**ROS melodic** @ **Ubuntu 18.04**的[移动机器人运动规划/Motion Planning for Mobile Robotics](https://www.shenlanxueyuan.com/course/324)学习环境. 
+本Repo为基于**ROS melodic** @ **Ubuntu 18.04**的[移动机器人运动规划/Motion Planning for Mobile Robotics](https://www.shenlanxueyuan.com/course/450)学习环境. 
 
 **移动机器人运动规划开发，有较为复杂的环境依赖**. 然而:
 
@@ -18,7 +18,7 @@ Designed & Implemented by **Ge Yao**, alexgecontrol@qq.com
 
 故: 本学习环境将以**Docker Image**的形式提供, 以实现与Native PC环境的隔离. 
 
-* 本项目Native PC的操作系统选择**Ubuntu**. Windows与Mac不推荐使用, 若有意尝试, 请自行搜索相关解决方案.
+* 本项目Native PC的操作系统选择**Ubuntu**. Windows与Mac没有经过测试, 也没有迁移与维护的计划. 若有意尝试, 请自行搜索相关解决方案.
 
 
 **若您坚持在Native PC上进行开发**, 此处**将默认您有足够的定位&建图开发环境运维经验, 能够自定义开发环境, 并且自主解决由于环境依赖冲突导致的各种问题**. 请您
@@ -42,15 +42,7 @@ Designed & Implemented by **Ge Yao**, alexgecontrol@qq.com
 
 ### Workspace
 
-当Native PC与Course Docker Environment均准备就绪时, 即可开始使用本开发环境:
-
-* **第一次使用时, 请首先下载课程配套的测试数据**[here](README.md).
-
-* 之后, 即可通过**本地VSCode开发, Docker内部编译测试**的模式, 完成课程作业.
-
-#### 获取课程数据
-
-在第一次使用时, 需要将**课程配套的测试数据**下载至本地文件系统. 具体操作方法参考[点击链接进入](README.md)
+当Native PC与Course Docker Environment均准备就绪时, 即可通过**本地VSCode开发, Docker内部编译测试**的模式, 完成课程作业.
 
 #### 开发, 编译与测试
 
